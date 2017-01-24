@@ -1,0 +1,18 @@
+{
+  "name": "tdl",
+  "dependencies": {
+    "purescript-tuples": "^3.1.0",
+    "purescript-transformers": "^2.2.0",
+    "purescript-prelude": "^2.1.0",
+    "purescript-maps": "^2.1.0",
+    "purescript-maybe": "^2.0.1",
+    "purescript-foldable-traversable": "^2.1.0",
+    "purescript-newtype": "^1.2.0",
+    "purescript-monoid": "^2.2.0",
+    "purescript-either": "^2.1.0"
+  },
+  "devDependencies": {
+    "purescript-eff": "^2.0.0",
+    "purescript-assert": "^2.0.0"
+  }
+}
