@@ -36,6 +36,9 @@ main = do
   exampleModule $ Nil
   exampleModule $ TypeDeclaration "T" IntType : Nil
   exampleModule $ TypeDeclaration "T" IntType : TypeDeclaration "U" (NamedType "T") : Nil
+  exampleModule $ TypeDeclaration "T" IntType
+                : TypeDeclaration "U" (ProductType ["x" /\ IntType, "y" /\ NamedType "T"])
+                : Nil
 
   where
     testKind t k = assert $ runCheck (inferKind t) == Right k
