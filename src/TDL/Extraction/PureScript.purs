@@ -19,6 +19,7 @@ pursTypeName (ProductType ts) = "{" <> String.joinWith ", " entries <> "}"
 pursTypeName (SumType ts) = "TODO"
 pursTypeName (FuncType a b) = "(" <> pursTypeName a <> " -> " <> pursTypeName b <> ")"
 
+-- | This function may throw on ill-typed inputs.
 pursSerialize :: Partial => Type -> String
 pursSerialize (NamedType n) = "serializeNamed" <> n
 pursSerialize IntType = "serializeInt"
@@ -27,9 +28,11 @@ pursSerialize (ProductType ts) =
     where entries = map (\(k /\ t) -> pursSerialize t <> " r." <> k) ts
 pursSerialize (SumType ts) = "TODO"
 
+-- | This function may throw on ill-typed inputs.
 pursModule :: Partial => Module -> String
 pursModule = foldMap pursDeclaration
 
+-- | This function may throw on ill-typed inputs.
 pursDeclaration :: Partial => Declaration -> String
 pursDeclaration (TypeDeclaration n t) =
        "newtype " <> n <> " = " <> n <> " " <> pursTypeName t <> "\n"
