@@ -8,7 +8,6 @@ module TDL.Extraction.PureScript
 import Data.Array as Array
 import Data.Foldable (foldMap)
 import Data.String as String
-import Data.Tuple (fst)
 import Data.Tuple.Nested ((/\))
 import Prelude
 import TDL.Syntax (Declaration(..), Module, Type(..))
@@ -24,42 +23,49 @@ pursTypeName (FuncType a b) = "(" <> pursTypeName a <> " -> " <> pursTypeName b 
 -- | This function may throw on ill-typed inputs.
 pursSerialize :: Partial => Type -> String
 pursSerialize (NamedType n) = "serializeNamed" <> n
-pursSerialize IntType = "serializeInt"
+pursSerialize IntType = "TDLSUPPORT.serializeInt"
 pursSerialize (ProductType ts) =
-    "(\\r -> serializeProduct [" <> String.joinWith ", " entries <> "])"
-    where entries = map (\(k /\ t) -> pursSerialize t <> " r." <> k) ts
+    "(\\tdl__r -> TDLSUPPORT.serializeProduct [" <> String.joinWith ", " entries <> "])"
+    where entries = map (\(k /\ t) -> pursSerialize t <> " tdl__r." <> k) ts
 pursSerialize (SumType ts) = "TODO"
 
 -- | This function may throw on ill-typed inputs.
 pursDeserialize :: Partial => Type -> String
 pursDeserialize (NamedType n) = "deserializeNamed" <> n
-pursDeserialize IntType = "deserializeInt"
+pursDeserialize IntType = "TDLSUPPORT.deserializeInt"
 pursDeserialize (ProductType ts) =
-    "(\\r -> do\n"
-    <> "  r' <- deserializeProduct " <> show (Array.length ts) <> " r\n"
-    <> String.joinWith "\n" (map indent entries) <> "\n"
-    <> "  pure {" <> String.joinWith ", " (map fst ts) <> "}"
+    "(\\tdl__r -> "
+    <> "TDLSUPPORT.deserializeProduct " <> show (Array.length ts) <> " tdl__r"
+    <> " TDLSUPPORT.>>= \\tdl__r' ->\n"
+    <> ( if Array.length ts == 0
+           then "  TDLSUPPORT.pure {}"
+           else indent (
+                  "{" <> String.joinWith ", " (map (\(k /\ _) -> k <> ": _") ts) <> "}\n"
+                  <> "TDLSUPPORT.<$> "
+                  <> String.joinWith "\nTDLSUPPORT.<*> " (Array.mapWithIndex entry ts)
+                )
+       )
     <> ")"
-    where entries = ts # Array.mapWithIndex \i (k /\ t) ->
-            "" <> k <> " <-\n"
-            <> indent (pursDeserialize t <> " (r' `unsafePartial unsafeIndex` " <> show i <> ")")
+    where entry i (_ /\ t) = pursDeserialize t <> " (TDLSUPPORT.unsafeIndex tdl__r' " <> show i <> ")"
 pursDeserialize (SumType ts) = "TODO"
 
 -- | This function may throw on ill-typed inputs.
 pursModule :: Partial => Module -> String
-pursModule = foldMap pursDeclaration
+pursModule m =
+       "import TDL.Support as TDLSUPPORT\n"
+    <> foldMap pursDeclaration m
 
 -- | This function may throw on ill-typed inputs.
 pursDeclaration :: Partial => Declaration -> String
 pursDeclaration (TypeDeclaration n t) =
        "newtype " <> n <> " = " <> n <> " " <> pursTypeName t <> "\n"
-    <> "serializeNamed" <> n <> " :: " <> n <> " -> Json\n"
+    <> "serializeNamed" <> n <> " :: " <> n <> " -> TDLSUPPORT.Json\n"
     <> "serializeNamed" <> n <> " (" <> n <> " x) =\n"
     <> "  " <> pursSerialize t <> " x\n"
-    <> "deserializeNamed" <> n <> " :: Json -> Either String " <> n <> "\n"
+    <> "deserializeNamed" <> n <> " :: TDLSUPPORT.Json -> TDLSUPPORT.Either String " <> n <> "\n"
     <> "deserializeNamed" <> n <> " =\n"
     <> indent (pursDeserialize t) <> "\n"
-    <> "  >>> map " <> n <> "\n"
+    <> "  TDLSUPPORT.>>> TDLSUPPORT.map " <> n <> "\n"
 
 indent :: String -> String
 indent =
