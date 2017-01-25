@@ -4,9 +4,11 @@ module TDL.Syntax
 
   , KindLUB(..)
 
+  , Module
   , Declaration(..)
   ) where
 
+import Data.List (List)
 import Data.Monoid (class Monoid)
 import Data.Newtype (class Newtype)
 import Data.Tuple (Tuple)
@@ -43,6 +45,8 @@ instance monoidKindLUB :: Monoid KindLUB where
   mempty = KindLUB SeriKind
 
 --------------------------------------------------------------------------------
+
+type Module = List Declaration
 
 data Declaration
   = TypeDeclaration String Type

@@ -10,7 +10,8 @@
     "purescript-newtype": "^1.2.0",
     "purescript-monoid": "^2.2.0",
     "purescript-either": "^2.1.0",
-    "purescript-strings": "^2.1.0"
+    "purescript-strings": "^2.1.0",
+    "purescript-lists": "^3.3.0"
   },
   "devDependencies": {
     "purescript-eff": "^2.0.0",
