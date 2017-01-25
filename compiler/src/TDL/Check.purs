@@ -2,6 +2,7 @@ module TDL.Check
   ( Check
   , Environment
   , Error(..)
+  , prettyError
   , runCheck
 
   , inferKind
@@ -36,6 +37,9 @@ data Error
   = NameError String
 
 derive instance eqError :: Eq Error
+
+prettyError :: Error -> String
+prettyError (NameError n) = "'" <> n <> "' is not defined."
 
 runCheck :: forall a. Check a -> Either Error a
 runCheck m = runExcept (runReaderT m Map.empty)
