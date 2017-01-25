@@ -22,7 +22,7 @@ pursTypeName (FuncType a b) = "(" <> pursTypeName a <> " -> " <> pursTypeName b 
 
 -- | This function may throw on ill-typed inputs.
 pursSerialize :: Partial => Type -> String
-pursSerialize (NamedType n) = "serializeNamed" <> n
+pursSerialize (NamedType n) = "serialize" <> n
 pursSerialize IntType = "TDLSUPPORT.serializeInt"
 pursSerialize (ProductType ts) =
   "(\\tdl__r -> TDLSUPPORT.serializeProduct [" <> String.joinWith ", " entries <> "])"
@@ -31,7 +31,7 @@ pursSerialize (SumType ts) = "TODO"
 
 -- | This function may throw on ill-typed inputs.
 pursDeserialize :: Partial => Type -> String
-pursDeserialize (NamedType n) = "deserializeNamed" <> n
+pursDeserialize (NamedType n) = "deserialize" <> n
 pursDeserialize IntType = "TDLSUPPORT.deserializeInt"
 pursDeserialize (ProductType ts) =
   "(\\tdl__r -> "
@@ -60,11 +60,11 @@ pursModule m =
 pursDeclaration :: Partial => Declaration -> String
 pursDeclaration (TypeDeclaration n t) =
      "newtype " <> n <> " = " <> n <> " " <> pursTypeName t <> "\n"
-  <> "serializeNamed" <> n <> " :: " <> n <> " -> TDLSUPPORT.Json\n"
-  <> "serializeNamed" <> n <> " (" <> n <> " x) =\n"
+  <> "serialize" <> n <> " :: " <> n <> " -> TDLSUPPORT.Json\n"
+  <> "serialize" <> n <> " (" <> n <> " x) =\n"
   <> "  " <> pursSerialize t <> " x\n"
-  <> "deserializeNamed" <> n <> " :: TDLSUPPORT.Json -> TDLSUPPORT.Either String " <> n <> "\n"
-  <> "deserializeNamed" <> n <> " =\n"
+  <> "deserialize" <> n <> " :: TDLSUPPORT.Json -> TDLSUPPORT.Either String " <> n <> "\n"
+  <> "deserialize" <> n <> " =\n"
   <> indent (pursDeserialize t) <> "\n"
   <> "  TDLSUPPORT.>>> TDLSUPPORT.map " <> n <> "\n"
 
