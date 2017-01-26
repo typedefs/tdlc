@@ -1,2 +1,2 @@
-type UserID = int;
-type User = {id: UserID, age: int};
+type UserID : serializable = int;
+type User : serializable = { id : UserID, age : int };

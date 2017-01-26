@@ -3,7 +3,7 @@ module Main
   ) where
 
 import Control.Monad.Eff (Eff)
-import Control.Monad.Eff.Console (CONSOLE, log)
+import Control.Monad.Eff.Console (CONSOLE, error, log)
 import Control.Monad.Eff.Exception (EXCEPTION)
 import Data.Bifunctor (lmap)
 import Data.Either (either)
@@ -24,7 +24,7 @@ main [path] = read >>= compile
            #  lmap show <<< parse
           >>~ lmap prettyError <<< runCheck <<< inferModule
           <#> unsafePartial pursModule
-           #  either (log <<< show) log
+           #  either error log
 main _ = log "Usage: tdlc <path>"
 
 --------------------------------------------------------------------------------

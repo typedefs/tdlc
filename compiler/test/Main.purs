@@ -25,8 +25,10 @@ main = do
   testKind (SumType ["x" /\ IntType, "y" /\ FuncType IntType IntType]) TypeKind
 
   testModule $ Nil
-  testModule $ TypeDeclaration "T" IntType : Nil
-  testModule $ TypeDeclaration "T" IntType : TypeDeclaration "U" (NamedType "T") : Nil
+  testModule $ TypeDeclaration "T" TypeKind IntType : Nil
+  testModule $ TypeDeclaration "T" SeriKind IntType
+             : TypeDeclaration "U" SeriKind (NamedType "T")
+             : Nil
 
   exampleType $ IntType
   exampleType $ ProductType []
@@ -34,13 +36,15 @@ main = do
   exampleType $ ProductType ["x" /\ IntType, "y" /\ ProductType []]
 
   exampleModule $ Nil
-  exampleModule $ TypeDeclaration "T" IntType : Nil
-  exampleModule $ TypeDeclaration "T" IntType : TypeDeclaration "U" (NamedType "T") : Nil
-  exampleModule $ TypeDeclaration "T" IntType
-                : TypeDeclaration "U" (ProductType ["x" /\ IntType, "y" /\ NamedType "T"])
+  exampleModule $ TypeDeclaration "T" TypeKind IntType : Nil
+  exampleModule $ TypeDeclaration "T" SeriKind IntType
+                : TypeDeclaration "U" SeriKind (NamedType "T")
                 : Nil
-  exampleModule $ TypeDeclaration "T" IntType
-                : TypeDeclaration "U" (ProductType ["x" /\ IntType, "y" /\ ProductType []])
+  exampleModule $ TypeDeclaration "T" SeriKind IntType
+                : TypeDeclaration "U" SeriKind (ProductType ["x" /\ IntType, "y" /\ NamedType "T"])
+                : Nil
+  exampleModule $ TypeDeclaration "T" SeriKind IntType
+                : TypeDeclaration "U" SeriKind (ProductType ["x" /\ IntType, "y" /\ ProductType []])
                 : Nil
 
   where

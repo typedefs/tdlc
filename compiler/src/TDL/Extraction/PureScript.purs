@@ -10,7 +10,7 @@ import Data.Foldable (foldMap)
 import Data.String as String
 import Data.Tuple.Nested ((/\))
 import Prelude
-import TDL.Syntax (Declaration(..), Module, Type(..))
+import TDL.Syntax (Declaration(..), Kind(..), Module, Type(..))
 
 pursTypeName :: Type -> String
 pursTypeName (NamedType n) = n
@@ -58,16 +58,21 @@ pursModule m =
 
 -- | This function may throw on ill-typed inputs.
 pursDeclaration :: Partial => Declaration -> String
-pursDeclaration (TypeDeclaration n t) =
+pursDeclaration (TypeDeclaration n k t) =
      "newtype " <> n <> " = " <> n <> " " <> pursTypeName t <> "\n"
-  <> "derive instance eq" <> n <> " :: TDLSUPPORT.Eq " <> n <> "\n"
-  <> "serialize" <> n <> " :: " <> n <> " -> TDLSUPPORT.Json\n"
-  <> "serialize" <> n <> " (" <> n <> " x) =\n"
-  <> "  " <> pursSerialize t <> " x\n"
-  <> "deserialize" <> n <> " :: TDLSUPPORT.Json -> TDLSUPPORT.Either String " <> n <> "\n"
-  <> "deserialize" <> n <> " =\n"
-  <> indent (pursDeserialize t) <> "\n"
-  <> "  TDLSUPPORT.>>> TDLSUPPORT.map " <> n <> "\n"
+  <> serialization
+  where serialization = case k of
+          TypeKind -> ""
+          SeriKind ->
+              "derive instance eq" <> n <> " :: TDLSUPPORT.Eq " <> n <> "\n"
+            <> "serialize" <> n <> " :: " <> n <> " -> TDLSUPPORT.Json\n"
+            <> "serialize" <> n <> " (" <> n <> " x) =\n"
+            <> "  " <> pursSerialize t <> " x\n"
+            <> "deserialize" <> n
+            <> " :: TDLSUPPORT.Json -> TDLSUPPORT.Either String " <> n <> "\n"
+            <> "deserialize" <> n <> " =\n"
+            <> indent (pursDeserialize t) <> "\n"
+            <> "  TDLSUPPORT.>>> TDLSUPPORT.map " <> n <> "\n"
 
 indent :: String -> String
 indent =

@@ -10,7 +10,7 @@ import Data.Foldable (foldr)
 import Data.String as String
 import Data.Tuple.Nested ((/\))
 import Prelude
-import TDL.Syntax (Declaration(..), Module, Type(..))
+import TDL.Syntax (Declaration(..), Kind(..), Module, Type(..))
 import Text.Parsing.StringParser (ParseError, Parser, runParser)
 import Text.Parsing.StringParser as P
 import Text.Parsing.StringParser.Combinators as PC
@@ -22,6 +22,9 @@ parse :: String -> Either ParseError Module
 parse = runParser module_
 
 --------------------------------------------------------------------------------
+
+kind_ :: Parser Kind
+kind_ = (TypeKind <$ typeKeyword) <|> (SeriKind <$ serializableKeyword)
 
 type_ :: Parser Type
 type_ = pure unit >>= \_ -> type' unit
@@ -46,10 +49,12 @@ declaration :: Parser Declaration
 declaration = do
   typeKeyword
   name <- identifier
+  colonPunc
+  kind' <- kind_
   equalsSignPunc
   original <- type_
   semicolonPunc
-  pure $ TypeDeclaration name original
+  pure $ TypeDeclaration name kind' original
 
 --------------------------------------------------------------------------------
 
@@ -61,11 +66,14 @@ lexeme p = blank *> p <* blank
 identifier :: Parser String
 identifier = lexeme do
   name <- String.fromCharArray <<< Array.fromFoldable <$> PC.many1 PS.alphaNum
-  guard (name `Array.notElem` ["int", "type"])
+  guard (name `Array.notElem` ["int", "serializable", "type"])
   pure name
 
 intKeyword :: Parser Unit
 intKeyword = void $ lexeme $ PS.string "int"
+
+serializableKeyword :: Parser Unit
+serializableKeyword = void $ lexeme $ PS.string "serializable"
 
 typeKeyword :: Parser Unit
 typeKeyword = void $ lexeme $ PS.string "type"

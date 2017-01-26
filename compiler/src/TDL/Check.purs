@@ -25,7 +25,7 @@ import Data.Newtype (ala)
 import Data.Traversable (traverse)
 import Data.Tuple (snd)
 import Prelude
-import TDL.Syntax (Declaration(..), Kind(..), KindLUB(..), Module, Type(..))
+import TDL.Syntax (Declaration(..), Kind(..), KindLUB(..), Module, subkind, Type(..))
 
 --------------------------------------------------------------------------------
 
@@ -35,11 +35,15 @@ type Environment = Map String Kind
 
 data Error
   = NameError String
+  | KindError Kind Kind
 
 derive instance eqError :: Eq Error
 
 prettyError :: Error -> String
 prettyError (NameError n) = "'" <> n <> "' is not defined."
+prettyError (KindError a b) = f a <> " is not a subkind of " <> f b <> "."
+  where f TypeKind = "'type'"
+        f SeriKind = "'serializable'"
 
 runCheck :: forall a. Check a -> Either Error a
 runCheck m = runExcept (runReaderT m Map.empty)
@@ -65,5 +69,8 @@ inferModule (d : ds) = do
     inferModule ds
 
 inferDeclaration :: Declaration -> Check Environment
-inferDeclaration (TypeDeclaration n t) =
-  Map.singleton n <$> inferKind t
+inferDeclaration (TypeDeclaration n k t) = do
+  k' <- inferKind t
+  when (not (k' `subkind` k)) $
+    throwError $ KindError k' k
+  pure $ Map.singleton n k

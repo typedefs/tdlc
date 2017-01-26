@@ -2,6 +2,7 @@ module TDL.Syntax
   ( Kind(..)
   , Type(..)
 
+  , subkind
   , KindLUB(..)
 
   , Module
@@ -32,6 +33,12 @@ derive instance eqType :: Eq Type
 
 --------------------------------------------------------------------------------
 
+subkind :: Kind -> Kind -> Boolean
+subkind TypeKind TypeKind = true
+subkind TypeKind SeriKind = false
+subkind SeriKind TypeKind = true
+subkind SeriKind SeriKind = true
+
 newtype KindLUB = KindLUB Kind
 
 derive instance newtypeKindLUB :: Newtype KindLUB _
@@ -49,4 +56,4 @@ instance monoidKindLUB :: Monoid KindLUB where
 type Module = List Declaration
 
 data Declaration
-  = TypeDeclaration String Type
+  = TypeDeclaration String Kind Type
