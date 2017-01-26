@@ -59,7 +59,7 @@ pursDeserialize (ProductType ts) =
       pursDeserialize t <> " (TDLSUPPORT.unsafeIndex tdl__r' " <> show i <> ")"
 pursDeserialize (SumType ts) =
   "(\\tdl__r ->"
-  <> " TDLSUPPORT.deserializeSum " <> show (Array.length ts) <> " tdl__r "
+  <> " TDLSUPPORT.deserializeSum tdl__r"
   <> " TDLSUPPORT.>>= case _ of\n" <> fold (Array.mapWithIndex entry ts)
   <> "  {d: _} -> TDLSUPPORT.Left " <> show "Sum discriminator was out of bounds."
   <> ")"

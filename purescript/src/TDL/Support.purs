@@ -41,8 +41,8 @@ deserializeProduct n j = do
     Left "Product was serialized as a JSON array of the wrong length."
   pure a
 
-deserializeSum :: Int -> Json -> Either String {d :: Int, x :: Json}
-deserializeSum n j = do
+deserializeSum :: Json -> Either String {d :: Int, x :: Json}
+deserializeSum j = do
   a <- Json.toArray j # maybe (Left "Sum was not serialized as a JSON array.") Right
   case a of
     [jd, x] -> {d: _, x} <$> deserializeInt jd
