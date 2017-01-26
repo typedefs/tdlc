@@ -1,0 +1,2 @@
+type UserID = int;
+type User = {id: UserID, age: int};

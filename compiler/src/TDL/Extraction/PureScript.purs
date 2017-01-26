@@ -60,6 +60,7 @@ pursModule m =
 pursDeclaration :: Partial => Declaration -> String
 pursDeclaration (TypeDeclaration n t) =
      "newtype " <> n <> " = " <> n <> " " <> pursTypeName t <> "\n"
+  <> "derive instance eq" <> n <> " :: TDLSUPPORT.Eq " <> n <> "\n"
   <> "serialize" <> n <> " :: " <> n <> " -> TDLSUPPORT.Json\n"
   <> "serialize" <> n <> " (" <> n <> " x) =\n"
   <> "  " <> pursSerialize t <> " x\n"
