@@ -85,8 +85,8 @@ pursDeclaration (TypeDeclaration n k t) =
           SeriKind ->
               "derive instance eq" <> n <> " :: TDLSUPPORT.Eq " <> n <> "\n"
             <> "serialize" <> n <> " :: " <> n <> " -> TDLSUPPORT.Json\n"
-            <> "serialize" <> n <> " (" <> n <> " x) =\n"
-            <> "  " <> pursSerialize t <> " x\n"
+            <> "serialize" <> n <> " (" <> n <> " tdl__a) =\n"
+            <> "  " <> pursSerialize t <> " tdl__a\n"
             <> "deserialize" <> n
             <> " :: TDLSUPPORT.Json -> TDLSUPPORT.Either String " <> n <> "\n"
             <> "deserialize" <> n <> " =\n"
