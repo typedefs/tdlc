@@ -61,7 +61,7 @@ pursDeserialize (SumType ts) =
   "(\\tdl__r ->"
   <> " TDLSUPPORT.deserializeSum " <> show (Array.length ts) <> " tdl__r "
   <> " TDLSUPPORT.>>= case _ of\n" <> fold (Array.mapWithIndex entry ts)
-  <> "  {d: _} -> TDLSUPPORT.Left " <> show "Sum descriminator was out of bounds."
+  <> "  {d: _} -> TDLSUPPORT.Left " <> show "Sum discriminator was out of bounds."
   <> ")"
   where entry i (_ /\ t) =
           "  {d: " <> show i <> ", x: tdl__x} -> " <> path i <> " TDLSUPPORT.<$>\n"
