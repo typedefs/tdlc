@@ -1,6 +1,7 @@
 module TDL.Syntax
   ( Kind(..)
   , Type(..)
+  , PrimType(..)
 
   , subkind
   , KindLUB(..)
@@ -23,13 +24,19 @@ data Kind
 
 data Type
   = NamedType String
-  | IntType
+  | PrimType PrimType
   | ProductType (Array (Tuple String Type))
   | SumType (Array (Tuple String Type))
   | FuncType Type Type
 
+data PrimType
+  = I32Type
+  | F64Type
+  | TextType
+
 derive instance eqKind :: Eq Kind
 derive instance eqType :: Eq Type
+derive instance eqPrimType :: Eq PrimType
 
 --------------------------------------------------------------------------------
 

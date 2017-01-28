@@ -54,7 +54,7 @@ inferKind :: Type -> Check Kind
 inferKind (NamedType n) =
   Reader.asks (Map.lookup n)
   >>= maybe (throwError (NameError n)) pure
-inferKind IntType = pure SeriKind
+inferKind (PrimType _) = pure SeriKind
 inferKind (ProductType ts) = ala KindLUB foldMap <$> traverse (inferKind <<< snd) ts
 inferKind (SumType     ts) = ala KindLUB foldMap <$> traverse (inferKind <<< snd) ts
 inferKind (FuncType a b) = TypeKind <$ inferKind a <* inferKind b

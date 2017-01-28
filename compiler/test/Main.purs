@@ -12,39 +12,39 @@ import Prelude
 import Test.Assert (ASSERT, assert)
 import TDL.Check (inferKind, inferModule, runCheck)
 import TDL.Extraction.PureScript (pursModule, pursSerialize, pursTypeName)
-import TDL.Syntax (Declaration(..), Kind(..), Type(..))
+import TDL.Syntax (Declaration(..), Kind(..), PrimType(..), Type(..))
 
 main :: forall eff. Eff (assert :: ASSERT, console :: CONSOLE | eff) Unit
 main = do
-  testKind IntType SeriKind
+  testKind (PrimType I32Type) SeriKind
   testKind (ProductType []) SeriKind
-  testKind (ProductType ["x" /\ IntType, "y" /\ IntType]) SeriKind
+  testKind (ProductType ["x" /\ (PrimType I32Type), "y" /\ (PrimType I32Type)]) SeriKind
   testKind (SumType []) SeriKind
-  testKind (SumType ["x" /\ IntType, "y" /\ IntType]) SeriKind
-  testKind (FuncType IntType IntType) TypeKind
-  testKind (SumType ["x" /\ IntType, "y" /\ FuncType IntType IntType]) TypeKind
+  testKind (SumType ["x" /\ (PrimType I32Type), "y" /\ (PrimType I32Type)]) SeriKind
+  testKind (FuncType (PrimType I32Type) (PrimType I32Type)) TypeKind
+  testKind (SumType ["x" /\ (PrimType I32Type), "y" /\ FuncType (PrimType I32Type) (PrimType I32Type)]) TypeKind
 
   testModule $ Nil
-  testModule $ TypeDeclaration "T" TypeKind IntType : Nil
-  testModule $ TypeDeclaration "T" SeriKind IntType
+  testModule $ TypeDeclaration "T" TypeKind (PrimType I32Type) : Nil
+  testModule $ TypeDeclaration "T" SeriKind (PrimType I32Type)
              : TypeDeclaration "U" SeriKind (NamedType "T")
              : Nil
 
-  exampleType $ IntType
+  exampleType $ (PrimType I32Type)
   exampleType $ ProductType []
-  exampleType $ ProductType ["x" /\ IntType]
-  exampleType $ ProductType ["x" /\ IntType, "y" /\ ProductType []]
+  exampleType $ ProductType ["x" /\ (PrimType I32Type)]
+  exampleType $ ProductType ["x" /\ (PrimType I32Type), "y" /\ ProductType []]
 
   exampleModule $ Nil
-  exampleModule $ TypeDeclaration "T" TypeKind IntType : Nil
-  exampleModule $ TypeDeclaration "T" SeriKind IntType
+  exampleModule $ TypeDeclaration "T" TypeKind (PrimType I32Type) : Nil
+  exampleModule $ TypeDeclaration "T" SeriKind (PrimType I32Type)
                 : TypeDeclaration "U" SeriKind (NamedType "T")
                 : Nil
-  exampleModule $ TypeDeclaration "T" SeriKind IntType
-                : TypeDeclaration "U" SeriKind (ProductType ["x" /\ IntType, "y" /\ NamedType "T"])
+  exampleModule $ TypeDeclaration "T" SeriKind (PrimType I32Type)
+                : TypeDeclaration "U" SeriKind (ProductType ["x" /\ (PrimType I32Type), "y" /\ NamedType "T"])
                 : Nil
-  exampleModule $ TypeDeclaration "T" SeriKind IntType
-                : TypeDeclaration "U" SeriKind (ProductType ["x" /\ IntType, "y" /\ ProductType []])
+  exampleModule $ TypeDeclaration "T" SeriKind (PrimType I32Type)
+                : TypeDeclaration "U" SeriKind (ProductType ["x" /\ (PrimType I32Type), "y" /\ ProductType []])
                 : Nil
 
   where

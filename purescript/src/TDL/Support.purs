@@ -2,10 +2,14 @@ module TDL.Support
   ( module Data.Argonaut.Core
   , module Data.Either
   , module Prelude
-  , serializeInt
+  , serializeI32
+  , serializeF64
+  , serializeText
   , serializeProduct
   , serializeVariant
-  , deserializeInt
+  , deserializeI32
+  , deserializeF64
+  , deserializeText
   , deserializeProduct
   , deserializeSum
   , unsafeIndex
@@ -20,8 +24,14 @@ import Data.Maybe (maybe)
 import Partial.Unsafe (unsafePartial)
 import Prelude
 
-serializeInt :: Int -> Json
-serializeInt = Json.fromNumber <<< Int.toNumber
+serializeI32 :: Int -> Json
+serializeI32 = Json.fromNumber <<< Int.toNumber
+
+serializeF64 :: Number -> Json
+serializeF64 = Json.fromNumber
+
+serializeText :: String -> Json
+serializeText = Json.fromString
 
 serializeProduct :: Array Json -> Json
 serializeProduct = Json.fromArray
@@ -29,10 +39,20 @@ serializeProduct = Json.fromArray
 serializeVariant :: forall a. Int -> (a -> Json) -> a -> Json
 serializeVariant n f x = Json.fromArray [Json.fromNumber (Int.toNumber n), f x]
 
-deserializeInt :: Json -> Either String Int
-deserializeInt =
+deserializeI32 :: Json -> Either String Int
+deserializeI32 =
   (Json.toNumber >=> Int.fromNumber)
-  >>> maybe (Left "Integer was not serialized as an integral JSON number.") Right
+  >>> maybe (Left "i32 was not serialized as an integral JSON number.") Right
+
+deserializeF64 :: Json -> Either String Number
+deserializeF64 =
+  Json.toNumber
+  >>> maybe (Left "f64 was not serialized as a JSON number.") Right
+
+deserializeText :: Json -> Either String String
+deserializeText =
+  Json.toString
+  >>> maybe (Left "text was not serialized as a JSON string.") Right
 
 deserializeProduct :: Int -> Json -> Either String (Array Json)
 deserializeProduct n j = do
@@ -45,7 +65,7 @@ deserializeSum :: Json -> Either String {d :: Int, x :: Json}
 deserializeSum j = do
   a <- Json.toArray j # maybe (Left "Sum was not serialized as a JSON array.") Right
   case a of
-    [jd, x] -> {d: _, x} <$> deserializeInt jd
+    [jd, x] -> {d: _, x} <$> deserializeI32 jd
     _ -> Left "Sum was serialized as a JSON array of the wrong length."
 
 unsafeIndex :: forall a. Array a -> Int -> a

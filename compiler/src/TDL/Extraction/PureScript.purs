@@ -12,11 +12,13 @@ import Data.List as List
 import Data.String as String
 import Data.Tuple.Nested ((/\))
 import Prelude
-import TDL.Syntax (Declaration(..), Kind(..), Module, Type(..))
+import TDL.Syntax (Declaration(..), Kind(..), Module, PrimType(..), Type(..))
 
 pursTypeName :: Type -> String
 pursTypeName (NamedType n) = n
-pursTypeName IntType = "Int"
+pursTypeName (PrimType I32Type)  = "Int"
+pursTypeName (PrimType F64Type)  = "Number"
+pursTypeName (PrimType TextType) = "String"
 pursTypeName (ProductType ts) = "{" <> String.joinWith ", " entries <> "}"
   where entries = map (\(k /\ t) -> k <> " :: " <> pursTypeName t) ts
 pursTypeName (SumType ts) = foldr step "TDLSUPPORT.Void" ts
@@ -26,7 +28,9 @@ pursTypeName (FuncType a b) = "(" <> pursTypeName a <> " -> " <> pursTypeName b 
 -- | This function may throw on ill-typed inputs.
 pursSerialize :: Partial => Type -> String
 pursSerialize (NamedType n) = "serialize" <> n
-pursSerialize IntType = "TDLSUPPORT.serializeInt"
+pursSerialize (PrimType I32Type)  = "TDLSUPPORT.serializeI32"
+pursSerialize (PrimType F64Type)  = "TDLSUPPORT.serializeF64"
+pursSerialize (PrimType TextType) = "TDLSUPPORT.serializeText"
 pursSerialize (ProductType ts) =
   "(\\tdl__r -> TDLSUPPORT.serializeProduct [" <> String.joinWith ", " entries <> "])"
   where entries = map (\(k /\ t) -> pursSerialize t <> " tdl__r." <> k) ts
@@ -41,7 +45,9 @@ pursSerialize (SumType ts) = go 0 (List.fromFoldable ts)
 -- | This function may throw on ill-typed inputs.
 pursDeserialize :: Partial => Type -> String
 pursDeserialize (NamedType n) = "deserialize" <> n
-pursDeserialize IntType = "TDLSUPPORT.deserializeInt"
+pursDeserialize (PrimType I32Type)  = "TDLSUPPORT.deserializeI32"
+pursDeserialize (PrimType F64Type)  = "TDLSUPPORT.deserializeF64"
+pursDeserialize (PrimType TextType) = "TDLSUPPORT.deserializeText"
 pursDeserialize (ProductType ts) =
   "(\\tdl__r -> "
   <> "TDLSUPPORT.deserializeProduct " <> show (Array.length ts) <> " tdl__r"

@@ -10,7 +10,7 @@ import Data.Foldable (foldr)
 import Data.String as String
 import Data.Tuple.Nested ((/\))
 import Prelude
-import TDL.Syntax (Declaration(..), Kind(..), Module, Type(..))
+import TDL.Syntax (Declaration(..), Kind(..), Module, PrimType(..), Type(..))
 import Text.Parsing.StringParser (ParseError, Parser, runParser)
 import Text.Parsing.StringParser as P
 import Text.Parsing.StringParser.Combinators as PC
@@ -32,13 +32,18 @@ type_ = pure unit >>= \_ -> type' unit
 type' :: Unit -> Parser Type
 type' _ = do
   head <-     P.try (NamedType <$> identifier)
-          <|> (IntType <$ intKeyword)
+          <|> P.try (PrimType <$> primType)
           <|> (ProductType <$> (leftBracePunc   *> fields <* rightBracePunc))
           <|> (SumType     <$> (leftBracketPunc *> fields <* rightBracketPunc))
   tail <- PC.many (rightArrowPunc *> type_)
   pure $ foldr FuncType head tail
   where fields = Array.fromFoldable <$> (field `PC.sepEndBy` commaPunc)
         field  = (/\) <$> identifier <*> (colonPunc *> type_)
+
+primType :: Parser PrimType
+primType =     (I32Type       <$ i32Keyword)
+           <|> (F64Type       <$ f64Keyword)
+           <|> (TextType      <$ textKeyword)
 
 --------------------------------------------------------------------------------
 
@@ -66,14 +71,20 @@ lexeme p = blank *> p <* blank
 identifier :: Parser String
 identifier = lexeme do
   name <- String.fromCharArray <<< Array.fromFoldable <$> PC.many1 PS.alphaNum
-  guard (name `Array.notElem` ["int", "serializable", "type"])
+  guard (name `Array.notElem` ["f64", "i32", "serializable", "text", "type"])
   pure name
 
-intKeyword :: Parser Unit
-intKeyword = void $ lexeme $ PS.string "int"
+f64Keyword :: Parser Unit
+f64Keyword = void $ lexeme $ PS.string "f64"
+
+i32Keyword :: Parser Unit
+i32Keyword = void $ lexeme $ PS.string "i32"
 
 serializableKeyword :: Parser Unit
 serializableKeyword = void $ lexeme $ PS.string "serializable"
+
+textKeyword :: Parser Unit
+textKeyword = void $ lexeme $ PS.string "text"
 
 typeKeyword :: Parser Unit
 typeKeyword = void $ lexeme $ PS.string "type"
