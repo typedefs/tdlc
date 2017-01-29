@@ -1,0 +1,22 @@
+box: node
+build:
+  steps:
+    - script:
+        name: enable root/sudo for npm/bower
+        code: |
+          # https://docs.npmjs.com/misc/config#unsafe-perm
+          npm config set unsafe-perm true
+          # https://github.com/bower/bower/issues/1752#issuecomment-113455403
+          echo "{\"allow_root\": true}" > ~/.bowerrc
+    - script:
+        name: install purescript, pulp, bower
+        code: |
+          npm i -g purescript pulp bower
+    - script:
+        name: run tdl test suite
+        code: |
+         python test/test --with-bower-install
+#report to mattermost
+  after-steps:
+    - slack-notifier:
+        url: $SLACK_URL
