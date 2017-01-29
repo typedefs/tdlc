@@ -17,12 +17,12 @@ import Control.Monad.Reader.Class as Reader
 import Control.Monad.Reader.Trans (ReaderT, runReaderT)
 import Data.Either (Either)
 import Data.Foldable (foldMap)
-import Data.List ((:), List(Nil))
+import Data.List as List
 import Data.Map (Map)
 import Data.Map as Map
 import Data.Maybe (maybe)
 import Data.Newtype (ala)
-import Data.Traversable (traverse)
+import Data.Traversable (traverse, traverse_)
 import Data.Tuple (snd)
 import Prelude
 import TDL.Syntax (Declaration(..), Kind(..), KindLUB(..), Module, subkind, Type(..))
@@ -62,15 +62,16 @@ inferKind (FuncType a b) = TypeKind <$ inferKind a <* inferKind b
 --------------------------------------------------------------------------------
 
 inferModule :: Module -> Check Unit
-inferModule Nil = pure unit
-inferModule (d : ds) = do
-  mappings <- inferDeclaration d
+inferModule ds = do
+  mappings <- List.foldM (\a b -> Map.union a <$> inferDeclaration b) Map.empty ds
   Reader.local (Map.union mappings) $
-    inferModule ds
+    traverse_ checkDeclaration ds
 
 inferDeclaration :: Declaration -> Check Environment
-inferDeclaration (TypeDeclaration n k t) = do
+inferDeclaration (TypeDeclaration n k _) = pure $ Map.singleton n k
+
+checkDeclaration :: Declaration -> Check Unit
+checkDeclaration (TypeDeclaration _ k t) = do
   k' <- inferKind t
   when (not (k' `subkind` k)) $
     throwError $ KindError k' k
-  pure $ Map.singleton n k
