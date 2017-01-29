@@ -1,3 +1,5 @@
 type Nil : serializable = {};
 type Cons : serializable = {head : i32, tail : List};
 type List : serializable = [nil : Nil, cons : Cons];
+
+type List2 : serializable = [nil : {}, cons : {head: i32, tail: List2}];

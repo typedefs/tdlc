@@ -1,5 +1,6 @@
 module TDL.Extraction.PureScript
   ( pursTypeName
+  , pursEq
   , pursSerialize
   , pursModule
   , pursDeclaration
@@ -24,6 +25,25 @@ pursTypeName (ProductType ts) = "{" <> String.joinWith ", " entries <> "}"
 pursTypeName (SumType ts) = foldr step "TDLSUPPORT.Void" ts
   where step (_ /\ t) u = "(TDLSUPPORT.Either " <> pursTypeName t <> " " <> u <> ")"
 pursTypeName (FuncType a b) = "(" <> pursTypeName a <> " -> " <> pursTypeName b <> ")"
+
+-- | This function may throw on ill-typed inputs.
+pursEq :: Partial => Type -> String
+pursEq (NamedType n) = "(TDLSUPPORT.eq :: " <> n <> " -> " <> n <> " -> Boolean)"
+pursEq (PrimType I32Type) = "(TDLSUPPORT.eq :: Int -> Int -> Boolean)"
+pursEq (PrimType F64Type) = "(TDLSUPPORT.eq :: Number -> Number -> Boolean)"
+pursEq (PrimType TextType) = "(TDLSUPPORT.eq :: String -> String -> Boolean)"
+pursEq (ProductType ts) =
+  "(\\tdl__a tdl__b -> " <> foldr (\a b -> a <> " TDLSUPPORT.&& " <> b) "true" entries <> ")"
+  where entries = map entry ts
+        entry (k /\ t) = "(" <> pursEq t <> " tdl__a." <> k <> " tdl__b." <> k <> ")"
+pursEq (SumType ts) =
+  "(\\tdl__a tdl__b -> case tdl__a, tdl__b of\n"
+  <> indent (fold (Array.mapWithIndex entry ts)) <> "\n"
+  <> "  _, _ -> false)"
+  where entry i (_ /\ t) = path i "tdl__c" <> ", " <> path i "tdl__d"
+                           <> " -> " <> pursEq t <> " tdl__c tdl__d\n"
+        path n v | n <= 0    = "TDLSUPPORT.Left " <> v
+                 | otherwise = "TDLSUPPORT.Right (" <> path (n - 1) v <> ")"
 
 -- | This function may throw on ill-typed inputs.
 pursSerialize :: Partial => Type -> String
@@ -89,7 +109,9 @@ pursDeclaration (TypeDeclaration n k t) =
   where serialization = case k of
           TypeKind -> ""
           SeriKind ->
-              "derive instance eq" <> n <> " :: TDLSUPPORT.Eq " <> n <> "\n"
+               "instance eq" <> n <> " :: TDLSUPPORT.Eq " <> n <> " where\n"
+            <> "  eq (" <> n <> " tdl__a) (" <> n <> " tdl__b) =\n"
+            <> indent (indent ("(" <> pursEq t <> ") tdl__a tdl__b")) <> "\n"
             <> "serialize" <> n <> " :: " <> n <> " -> TDLSUPPORT.Json\n"
             <> "serialize" <> n <> " (" <> n <> " tdl__a) =\n"
             <> "  " <> pursSerialize t <> " tdl__a\n"
