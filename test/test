@@ -5,6 +5,7 @@ import shutil
 import subprocess
 import os
 import os.path
+import sys
 
 @contextlib.contextmanager
 def chdir(path):
@@ -61,10 +62,17 @@ def test_cases():
             '''
             subprocess.check_call(['node', '-e', script])
 
+def bower_install(path):
+    with chdir(path):
+        subprocess.check_call(['bower', 'install'])
+
 def main():
     test_compiler()
     build_purescript_support()
     test_cases()
 
 if __name__ == '__main__':
+    if ('--with-bower-install' in sys.argv):
+        bower_install('compiler')
+        bower_install('purescript')
     main()
