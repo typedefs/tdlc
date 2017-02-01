@@ -39,8 +39,9 @@ derive instance eqError :: Eq Error
 
 prettyError :: Error -> String
 prettyError (NameError n) = "'" <> n <> "' is not defined."
-prettyError (KindError a b) = f a <> " /= " <> f b <> "."
-  where f SeriKind = "'*'"
+prettyError (KindError a b) = "'" <> f a <> "' /= '" <> f b <> "'."
+  where f SeriKind = "*"
+        f (ArrowKind k k') = "(" <> f k <> " -> " <> f k' <> ")"
 
 runCheck :: forall a. Check a -> Either Error a
 runCheck m = runExcept (runReaderT m Map.empty)

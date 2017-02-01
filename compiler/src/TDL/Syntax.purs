@@ -15,6 +15,7 @@ import Prelude
 
 data Kind
   = SeriKind
+  | ArrowKind Kind Kind
 
 data Type
   = NamedType String

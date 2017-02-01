@@ -6,6 +6,7 @@ import Control.Alternative ((<|>))
 import Control.MonadZero (guard)
 import Data.Array as Array
 import Data.Either (Either)
+import Data.Foldable (foldr)
 import Data.String as String
 import Data.Tuple.Nested ((/\))
 import Prelude
@@ -23,7 +24,13 @@ parse = runParser module_
 --------------------------------------------------------------------------------
 
 kind_ :: Parser Kind
-kind_ = SeriKind <$ asteriskPunc
+kind_ = pure unit >>= \_ -> kind' unit
+
+kind' :: Unit -> Parser Kind
+kind' _ = do
+  head <-     (SeriKind <$ asteriskPunc)
+          <|> (leftParenPunc *> kind_ <* rightParenPunc)
+  foldr ArrowKind head <$> PC.many (rightArrowPunc *> kind_)
 
 type_ :: Parser Type
 type_ = pure unit >>= \_ -> type' unit
@@ -53,11 +60,11 @@ declaration = do
   typeKeyword
   name <- identifier
   colonPunc
-  kind' <- kind_
+  typeKind <- kind_
   equalsSignPunc
   original <- type_
   semicolonPunc
-  pure $ TypeDeclaration name kind' original
+  pure $ TypeDeclaration name typeKind original
 
 --------------------------------------------------------------------------------
 
@@ -102,11 +109,20 @@ leftBracePunc = void $ lexeme $ PS.char '{'
 leftBracketPunc :: Parser Unit
 leftBracketPunc = void $ lexeme $ PS.char '['
 
+leftParenPunc :: Parser Unit
+leftParenPunc = void $ lexeme $ PS.char '('
+
+rightArrowPunc :: Parser Unit
+rightArrowPunc = void $ lexeme $ PS.string "->"
+
 rightBracePunc :: Parser Unit
 rightBracePunc = void $ lexeme $ PS.char '}'
 
 rightBracketPunc :: Parser Unit
 rightBracketPunc = void $ lexeme $ PS.char ']'
+
+rightParenPunc :: Parser Unit
+rightParenPunc = void $ lexeme $ PS.char ')'
 
 semicolonPunc :: Parser Unit
 semicolonPunc = void $ lexeme $ PS.char ';'
