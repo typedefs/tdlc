@@ -26,6 +26,8 @@ def build_purescript_support():
 
 def test_cases():
     for case in {os.path.splitext(p)[0] for p in os.listdir('test/cases')}:
+        print(case)
+
         tdl_path = 'test/cases/{}.tdl' .format(case)
         ps_path  = 'test/cases/{}.purs'.format(case)
 

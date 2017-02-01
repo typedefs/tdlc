@@ -1,5 +1,5 @@
-type Zero : * = [];
-type One : * = {};
-type Maybe : * = [just : i32, nothing : One];
+type Zero : * = void;
+type One : * = unit;
+type Maybe : * = just:i32 + nothing:One;
 
 /* comment */

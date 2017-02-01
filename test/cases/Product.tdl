@@ -1,2 +1,5 @@
 type UserID : * = text;
-type User : * = { id : UserID, age : i32 };
+type User : * = id:UserID * age:i32;
+
+type Singleton1 : * = id:UserID*;
+type Singleton2 : * = id:UserID+;
