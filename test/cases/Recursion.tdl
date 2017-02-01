@@ -1,5 +1,5 @@
-type Nil : * = {};
-type Cons : * = {head : i32, tail : List};
-type List : * = [nil : Nil, cons : Cons];
+type Nil : * = unit;
+type Cons : * = head:i32 * tail:List;
+type List : * = nil:Nil + cons:Cons;
 
-type List2 : * = [nil : {}, cons : {head: i32, tail: List2}];
+type List2 : * = nil:unit + cons:(head:i32 * tail:List2);
