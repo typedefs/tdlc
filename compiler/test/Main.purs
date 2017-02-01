@@ -21,22 +21,20 @@ main = do
   testKind (ProductType ["x" /\ (PrimType I32Type), "y" /\ (PrimType I32Type)]) SeriKind
   testKind (SumType []) SeriKind
   testKind (SumType ["x" /\ (PrimType I32Type), "y" /\ (PrimType I32Type)]) SeriKind
-  testKind (FuncType (PrimType I32Type) (PrimType I32Type)) TypeKind
-  testKind (SumType ["x" /\ (PrimType I32Type), "y" /\ FuncType (PrimType I32Type) (PrimType I32Type)]) TypeKind
 
   testModule $ Nil
-  testModule $ TypeDeclaration "T" TypeKind (PrimType I32Type) : Nil
+  testModule $ TypeDeclaration "T" SeriKind (PrimType I32Type) : Nil
   testModule $ TypeDeclaration "T" SeriKind (PrimType I32Type)
              : TypeDeclaration "U" SeriKind (NamedType "T")
              : Nil
 
-  exampleType $ (PrimType I32Type)
+  exampleType $ PrimType I32Type
   exampleType $ ProductType []
   exampleType $ ProductType ["x" /\ (PrimType I32Type)]
   exampleType $ ProductType ["x" /\ (PrimType I32Type), "y" /\ ProductType []]
 
   exampleModule $ Nil
-  exampleModule $ TypeDeclaration "T" TypeKind (PrimType I32Type) : Nil
+  exampleModule $ TypeDeclaration "T" SeriKind (PrimType I32Type) : Nil
   exampleModule $ TypeDeclaration "T" SeriKind (PrimType I32Type)
                 : TypeDeclaration "U" SeriKind (NamedType "T")
                 : Nil

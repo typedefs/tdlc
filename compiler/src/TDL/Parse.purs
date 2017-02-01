@@ -24,7 +24,13 @@ parse = runParser module_
 --------------------------------------------------------------------------------
 
 kind_ :: Parser Kind
-kind_ = (TypeKind <$ typeKeyword) <|> (SeriKind <$ serializableKeyword)
+kind_ = pure unit >>= \_ -> kind' unit
+
+kind' :: Unit -> Parser Kind
+kind' _ = do
+  head <-     (SeriKind <$ asteriskPunc)
+          <|> (leftParenPunc *> kind_ <* rightParenPunc)
+  foldr ArrowKind head <$> PC.many (rightArrowPunc *> kind_)
 
 type_ :: Parser Type
 type_ = pure unit >>= \_ -> type' unit
@@ -35,8 +41,7 @@ type' _ = do
           <|> P.try (PrimType <$> primType)
           <|> (ProductType <$> (leftBracePunc   *> fields <* rightBracePunc))
           <|> (SumType     <$> (leftBracketPunc *> fields <* rightBracketPunc))
-  tail <- PC.many (rightArrowPunc *> type_)
-  pure $ foldr FuncType head tail
+  pure head
   where fields = Array.fromFoldable <$> (field `PC.sepEndBy` commaPunc)
         field  = (/\) <$> identifier <*> (colonPunc *> type_)
 
@@ -55,11 +60,11 @@ declaration = do
   typeKeyword
   name <- identifier
   colonPunc
-  kind' <- kind_
+  typeKind <- kind_
   equalsSignPunc
   original <- type_
   semicolonPunc
-  pure $ TypeDeclaration name kind' original
+  pure $ TypeDeclaration name typeKind original
 
 --------------------------------------------------------------------------------
 
@@ -71,7 +76,7 @@ lexeme p = blank *> p <* blank
 identifier :: Parser String
 identifier = lexeme do
   name <- String.fromCharArray <<< Array.fromFoldable <$> PC.many1 PS.alphaNum
-  guard (name `Array.notElem` ["f64", "i32", "serializable", "text", "type"])
+  guard (name `Array.notElem` ["f64", "i32", "text", "type"])
   pure name
 
 f64Keyword :: Parser Unit
@@ -80,14 +85,14 @@ f64Keyword = void $ lexeme $ PS.string "f64"
 i32Keyword :: Parser Unit
 i32Keyword = void $ lexeme $ PS.string "i32"
 
-serializableKeyword :: Parser Unit
-serializableKeyword = void $ lexeme $ PS.string "serializable"
-
 textKeyword :: Parser Unit
 textKeyword = void $ lexeme $ PS.string "text"
 
 typeKeyword :: Parser Unit
 typeKeyword = void $ lexeme $ PS.string "type"
+
+asteriskPunc :: Parser Unit
+asteriskPunc = void $ lexeme $ PS.char '*'
 
 colonPunc :: Parser Unit
 colonPunc = void $ lexeme $ PS.char ':'
@@ -104,6 +109,9 @@ leftBracePunc = void $ lexeme $ PS.char '{'
 leftBracketPunc :: Parser Unit
 leftBracketPunc = void $ lexeme $ PS.char '['
 
+leftParenPunc :: Parser Unit
+leftParenPunc = void $ lexeme $ PS.char '('
+
 rightArrowPunc :: Parser Unit
 rightArrowPunc = void $ lexeme $ PS.string "->"
 
@@ -112,6 +120,9 @@ rightBracePunc = void $ lexeme $ PS.char '}'
 
 rightBracketPunc :: Parser Unit
 rightBracketPunc = void $ lexeme $ PS.char ']'
+
+rightParenPunc :: Parser Unit
+rightParenPunc = void $ lexeme $ PS.char ')'
 
 semicolonPunc :: Parser Unit
 semicolonPunc = void $ lexeme $ PS.char ';'
