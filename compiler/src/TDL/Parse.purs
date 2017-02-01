@@ -6,7 +6,6 @@ import Control.Alternative ((<|>))
 import Control.MonadZero (guard)
 import Data.Array as Array
 import Data.Either (Either)
-import Data.Foldable (foldr)
 import Data.String as String
 import Data.Tuple.Nested ((/\))
 import Prelude
@@ -24,7 +23,7 @@ parse = runParser module_
 --------------------------------------------------------------------------------
 
 kind_ :: Parser Kind
-kind_ = (TypeKind <$ typeKeyword) <|> (SeriKind <$ serializableKeyword)
+kind_ = SeriKind <$ asteriskPunc
 
 type_ :: Parser Type
 type_ = pure unit >>= \_ -> type' unit
@@ -35,8 +34,7 @@ type' _ = do
           <|> P.try (PrimType <$> primType)
           <|> (ProductType <$> (leftBracePunc   *> fields <* rightBracePunc))
           <|> (SumType     <$> (leftBracketPunc *> fields <* rightBracketPunc))
-  tail <- PC.many (rightArrowPunc *> type_)
-  pure $ foldr FuncType head tail
+  pure head
   where fields = Array.fromFoldable <$> (field `PC.sepEndBy` commaPunc)
         field  = (/\) <$> identifier <*> (colonPunc *> type_)
 
@@ -80,14 +78,14 @@ f64Keyword = void $ lexeme $ PS.string "f64"
 i32Keyword :: Parser Unit
 i32Keyword = void $ lexeme $ PS.string "i32"
 
-serializableKeyword :: Parser Unit
-serializableKeyword = void $ lexeme $ PS.string "serializable"
-
 textKeyword :: Parser Unit
 textKeyword = void $ lexeme $ PS.string "text"
 
 typeKeyword :: Parser Unit
 typeKeyword = void $ lexeme $ PS.string "type"
+
+asteriskPunc :: Parser Unit
+asteriskPunc = void $ lexeme $ PS.char '*'
 
 colonPunc :: Parser Unit
 colonPunc = void $ lexeme $ PS.char ':'
@@ -103,9 +101,6 @@ leftBracePunc = void $ lexeme $ PS.char '{'
 
 leftBracketPunc :: Parser Unit
 leftBracketPunc = void $ lexeme $ PS.char '['
-
-rightArrowPunc :: Parser Unit
-rightArrowPunc = void $ lexeme $ PS.string "->"
 
 rightBracePunc :: Parser Unit
 rightBracePunc = void $ lexeme $ PS.char '}'

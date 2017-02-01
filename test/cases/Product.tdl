@@ -1,2 +1,2 @@
-type UserID : serializable = text;
-type User : serializable = { id : UserID, age : i32 };
+type UserID : * = text;
+type User : * = { id : UserID, age : i32 };
