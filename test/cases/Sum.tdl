@@ -1,3 +1,5 @@
 type Zero : serializable = [];
 type One : serializable = {};
 type Maybe : serializable = [just : i32, nothing : One];
+
+/* comment */
