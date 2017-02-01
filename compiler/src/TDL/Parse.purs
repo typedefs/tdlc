@@ -69,7 +69,7 @@ lexeme p = blank *> p <* blank
 identifier :: Parser String
 identifier = lexeme do
   name <- String.fromCharArray <<< Array.fromFoldable <$> PC.many1 PS.alphaNum
-  guard (name `Array.notElem` ["f64", "i32", "serializable", "text", "type"])
+  guard (name `Array.notElem` ["f64", "i32", "text", "type"])
   pure name
 
 f64Keyword :: Parser Unit
