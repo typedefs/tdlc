@@ -66,7 +66,7 @@ declaration = do
 lexeme :: forall a. Parser a -> Parser a
 lexeme p = blank *> p <* blank
   where blank   = PS.whiteSpace *> PC.many (comment *> PS.whiteSpace)
-        comment = void $ PS.string "(*" *> PS.anyChar `PC.manyTill` PS.string "*)"
+        comment = void $ PS.string "/*" *> PS.anyChar `PC.manyTill` PS.string "*/"
 
 identifier :: Parser String
 identifier = lexeme do
