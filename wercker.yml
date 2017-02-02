@@ -2,6 +2,11 @@ box: node
 build:
   steps:
     - script:
+        name: install python3
+        code: |
+          apt-get update
+          apt-get install -y python3
+    - script:
         name: enable root/sudo for npm/bower
         code: |
           # https://docs.npmjs.com/misc/config#unsafe-perm
@@ -15,7 +20,7 @@ build:
     - script:
         name: run tdl test suite
         code: |
-         python test/test --with-bower-install
+         python3 test/test --with-bower-install
 #report to mattermost
   after-steps:
     - slack-notifier:
