@@ -13,7 +13,12 @@ import Data.List as List
 import Data.String as String
 import Data.Tuple.Nested ((/\))
 import Prelude
-import TDL.Syntax (Declaration(..), Module, PrimType(..), Type(..))
+import TDL.LambdaCalculus (etaExpandType)
+import TDL.Syntax (Declaration(..), Kind(..), Module, PrimType(..), Type(..))
+
+pursKindName :: Kind -> String
+pursKindName SeriKind = "*"
+pursKindName (ArrowKind k i) = "(" <> pursKindName k <> " " <> pursKindName i <> ")"
 
 pursTypeName :: Type -> String
 pursTypeName (NamedType n) = n
@@ -109,19 +114,31 @@ pursModule m =
   <> foldMap pursDeclaration m
 
 pursDeclaration :: Declaration -> String
-pursDeclaration (TypeDeclaration n _ t) =
-     "newtype " <> n <> " = " <> n <> " " <> pursTypeName t <> "\n"
-  <> "instance eq" <> n <> " :: TDLSUPPORT.Eq " <> n <> " where\n"
-  <> "  eq (" <> n <> " tdl__a) (" <> n <> " tdl__b) =\n"
-  <> indent (indent ("(" <> pursEq t <> ") tdl__a tdl__b")) <> "\n"
-  <> "serialize" <> n <> " :: " <> n <> " -> TDLSUPPORT.Json\n"
-  <> "serialize" <> n <> " (" <> n <> " tdl__a) =\n"
-  <> "  " <> pursSerialize t <> " tdl__a\n"
-  <> "deserialize" <> n
-  <> " :: TDLSUPPORT.Json -> TDLSUPPORT.Either String " <> n <> "\n"
-  <> "deserialize" <> n <> " =\n"
-  <> indent (pursDeserialize t) <> "\n"
-  <> "  TDLSUPPORT.>>> TDLSUPPORT.map " <> n <> "\n"
+pursDeclaration (TypeDeclaration n k t) =
+  case etaExpandType k t of
+    {params, type: t'} ->
+      let params' = map (\(p /\ k) -> " (" <> p <> " :: " <> pursKindName k <> ")") params in
+         "newtype " <> n <> fold params' <> " = " <> n <> " " <> pursTypeName t' <> "\n"
+      <> (if k == SeriKind then eqInstance          else "")
+      <> (if k == SeriKind then serializeFunction   else "")
+      <> (if k == SeriKind then deserializeFunction else "")
+  where
+    eqInstance =
+         "instance eq" <> n <> " :: TDLSUPPORT.Eq " <> n <> " where\n"
+      <> "  eq (" <> n <> " tdl__a) (" <> n <> " tdl__b) =\n"
+      <> indent (indent ("(" <> pursEq t <> ") tdl__a tdl__b")) <> "\n"
+
+    serializeFunction =
+         "serialize" <> n <> " :: " <> n <> " -> TDLSUPPORT.Json\n"
+      <> "serialize" <> n <> " (" <> n <> " tdl__a) =\n"
+      <> "  " <> pursSerialize t <> " tdl__a\n"
+
+    deserializeFunction =
+         "deserialize" <> n
+      <> " :: TDLSUPPORT.Json -> TDLSUPPORT.Either String " <> n <> "\n"
+      <> "deserialize" <> n <> " =\n"
+      <> indent (pursDeserialize t) <> "\n"
+      <> "  TDLSUPPORT.>>> TDLSUPPORT.map " <> n <> "\n"
 
 indent :: String -> String
 indent =

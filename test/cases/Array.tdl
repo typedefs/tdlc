@@ -1,3 +1,5 @@
 type Ints : * = array i32;
 
 type Units : * = array unit;
+
+type List : * -> * = array;
