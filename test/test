@@ -1,10 +1,10 @@
-#!/usr/bin/env python2
-from __future__ import print_function
+#!/usr/bin/env python3
 import contextlib
 import shutil
 import subprocess
 import os
 import os.path
+import tempfile
 import sys
 
 @contextlib.contextmanager
@@ -31,38 +31,36 @@ def test_cases():
         tdl_path = 'test/cases/{}.tdl' .format(case)
         ps_path  = 'test/cases/{}.purs'.format(case)
 
-        tmp_path = '/tmp/TDLCase{}'.format(case)
-        try:
-            os.mkdir(tmp_path)
-        except:
-            pass
+        with tempfile.TemporaryDirectory(prefix='tdltest') as tmp_path:
+            shutil.copyfile(ps_path, os.path.join(tmp_path, 'Main.purs'))
+            tdl_output = subprocess.check_output(
+                ['compiler/bin/tdlc', tdl_path],
+                universal_newlines=True)
+            output_filename = os.path.join(tmp_path, 'TDLOutput.purs')
+            with open(output_filename, 'w') as f:
+                print('module TDLOutput where', file=f)
+                print(tdl_output, file=f)
 
-        shutil.copyfile(ps_path, '{}/Main.purs'.format(tmp_path))
-        tdl_output = subprocess.check_output(['compiler/bin/tdlc', tdl_path])
-        with open('{}/TDLOutput.purs'.format(tmp_path), 'w') as f:
-            print('module TDLOutput where', file=f)
-            print(tdl_output, file=f)
+            with chdir('purescript'):
+                subprocess.check_call([
+                    'pulp', 'build',
+                    '-o', os.path.join(tmp_path, 'output'),
+                    '-I', tmp_path,
+                ])
 
-        with chdir('purescript'):
-            subprocess.check_call([
-                'pulp', 'build',
-                '-o', '{}/output'.format(tmp_path),
-                '-I', tmp_path,
-            ])
-
-        with chdir(tmp_path):
-            script = '''
-                var Main = require('./output/Main');
-                var status = 0;
-                for (var prop in Main) {
-                    console.log(prop);
-                    var ok = Main[prop]();
-                    status = ok ? status : 1;
-                    console.log('  - ' + ok);
-                }
-                process.exit(status);
-            '''
-            subprocess.check_call(['node', '-e', script])
+            with chdir(tmp_path):
+                script = '''
+                    var Main = require('./output/Main');
+                    var status = 0;
+                    for (var prop in Main) {
+                        console.log(prop);
+                        var ok = Main[prop]();
+                        status = ok ? status : 1;
+                        console.log('  - ' + ok);
+                    }
+                    process.exit(status);
+                '''
+                subprocess.check_call(['node', '-e', script])
 
 def bower_install(path):
     with chdir(path):
