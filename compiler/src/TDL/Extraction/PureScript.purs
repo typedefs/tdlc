@@ -28,9 +28,12 @@ pursTypeName (SumType ts) = foldr step "TDLSUPPORT.Void" ts
   where step (_ /\ t) u = "(TDLSUPPORT.Either " <> pursTypeName t <> " " <> u <> ")"
 
 pursEq :: Type -> String
-pursEq t@(NamedType _)     = pursNominalEq t
-pursEq t@(AppliedType _ _) = pursNominalEq t
-pursEq t@(PrimType _)      = pursNominalEq t
+pursEq t@(NamedType _)       = pursNominalEq t
+pursEq (AppliedType t u)     = "(" <> pursEq t <> " " <> pursEq u <> ")"
+pursEq t@(PrimType I32Type)  = pursNominalEq t
+pursEq t@(PrimType F64Type)  = pursNominalEq t
+pursEq t@(PrimType TextType) = pursNominalEq t
+pursEq (PrimType ArrayType)  = "TDLSUPPORT.eqArray"
 pursEq (ProductType ts) =
   "(\\tdl__a tdl__b -> " <> foldr (\a b -> a <> " TDLSUPPORT.&& " <> b) "true" entries <> ")"
   where entries = map entry ts
