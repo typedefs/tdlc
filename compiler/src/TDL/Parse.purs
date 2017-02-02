@@ -6,7 +6,7 @@ import Control.Alternative ((<|>))
 import Control.MonadZero (guard)
 import Data.Array as Array
 import Data.Either (Either)
-import Data.Foldable (foldr)
+import Data.Foldable (foldl, foldr)
 import Data.List ((:), List(Nil))
 import Data.String as String
 import Data.Tuple.Nested ((/\))
@@ -40,17 +40,19 @@ type' :: Unit -> Parser Type
 type' _ =
       P.try (ProductType <<< Array.fromFoldable <$> field `sepEndBy1SepMandatory` asteriskPunc)
   <|> P.try (SumType     <<< Array.fromFoldable <$> field `sepEndBy1SepMandatory` plusPunc)
-  <|>       simple
+  <|>       application
   where
     field = P.try $ (/\) <$> identifier <*> (colonPunc *> simple)
+    application = foldl AppliedType <$> simple <*> PC.many simple
     simple =     P.try (NamedType <$> identifier)
              <|>       keywordType
              <|>       (leftParenPunc *> type_ <* rightParenPunc)
-    keywordType =     (PrimType I32Type  <$ i32Keyword)
-                  <|> (PrimType F64Type  <$ f64Keyword)
-                  <|> (PrimType TextType <$ textKeyword)
-                  <|> (ProductType []    <$ unitKeyword)
-                  <|> (SumType     []    <$ voidKeyword)
+    keywordType =     (PrimType ArrayType <$ arrayKeyword)
+                  <|> (PrimType I32Type   <$ i32Keyword)
+                  <|> (PrimType F64Type   <$ f64Keyword)
+                  <|> (PrimType TextType  <$ textKeyword)
+                  <|> (ProductType []     <$ unitKeyword)
+                  <|> (SumType     []     <$ voidKeyword)
     sepEndBy1SepMandatory p sep = do
       a <- p
       (do sep
@@ -83,8 +85,11 @@ lexeme p = blank *> p <* blank
 identifier :: Parser String
 identifier = lexeme do
   name <- String.fromCharArray <<< Array.fromFoldable <$> PC.many1 PS.alphaNum
-  guard (name `Array.notElem` ["f64", "i32", "text", "type", "unit", "void"])
+  guard (name `Array.notElem` ["array", "f64", "i32", "text", "type", "unit", "void"])
   pure name
+
+arrayKeyword :: Parser Unit
+arrayKeyword = void $ lexeme $ PS.string "array"
 
 f64Keyword :: Parser Unit
 f64Keyword = void $ lexeme $ PS.string "f64"

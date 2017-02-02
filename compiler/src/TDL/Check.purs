@@ -23,7 +23,7 @@ import Data.Maybe (maybe)
 import Data.Traversable (traverse_)
 import Data.Tuple (snd)
 import Prelude
-import TDL.Syntax (Declaration(..), Kind(..), Module, Type(..))
+import TDL.Syntax (Declaration(..), Kind(..), Module, PrimType(..), Type(..))
 
 --------------------------------------------------------------------------------
 
@@ -34,6 +34,7 @@ type Environment = Map String Kind
 data Error
   = NameError String
   | KindError Kind Kind
+  | ApplyError
 
 derive instance eqError :: Eq Error
 
@@ -42,6 +43,7 @@ prettyError (NameError n) = "'" <> n <> "' is not defined."
 prettyError (KindError a b) = "'" <> f a <> "' /= '" <> f b <> "'."
   where f SeriKind = "*"
         f (ArrowKind k k') = "(" <> f k <> " -> " <> f k' <> ")"
+prettyError (ApplyError) = "applied type was not a type constructor."
 
 runCheck :: forall a. Check a -> Either Error a
 runCheck m = runExcept (runReaderT m Map.empty)
@@ -52,7 +54,17 @@ inferKind :: Type -> Check Kind
 inferKind (NamedType n) =
   Reader.asks (Map.lookup n)
   >>= maybe (throwError (NameError n)) pure
-inferKind (PrimType _) = pure SeriKind
+inferKind (AppliedType t u) =
+  inferKind t >>= case _ of
+    ArrowKind kt1 kt2 -> do
+      ku <- inferKind u
+      assertKind kt1 ku
+      pure kt2
+    _ -> throwError ApplyError
+inferKind (PrimType I32Type)   = pure SeriKind
+inferKind (PrimType F64Type)   = pure SeriKind
+inferKind (PrimType TextType)  = pure SeriKind
+inferKind (PrimType ArrayType) = pure (ArrowKind SeriKind SeriKind)
 inferKind (ProductType ts) = SeriKind <$ traverse_ (assertKind SeriKind <=< inferKind <<< snd) ts
 inferKind (SumType     ts) = SeriKind <$ traverse_ (assertKind SeriKind <=< inferKind <<< snd) ts
 

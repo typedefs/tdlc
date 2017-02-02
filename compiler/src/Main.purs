@@ -10,13 +10,14 @@ import Data.Either (either)
 import Node.Encoding (Encoding(UTF8))
 import Node.FS (FS)
 import Node.FS.Sync (readTextFile)
+import Node.Process (PROCESS, exit)
 import Partial.Unsafe (unsafePartial)
 import Prelude
 import TDL.Check (inferModule, prettyError, runCheck)
 import TDL.Extraction.PureScript (pursModule)
 import TDL.Parse (parse)
 
-main :: forall eff. Array String -> Eff (console :: CONSOLE, err :: EXCEPTION, fs :: FS | eff) Unit
+main :: forall eff. Array String -> Eff (console :: CONSOLE, err :: EXCEPTION, fs :: FS, process :: PROCESS | eff) Unit
 main [path] = read >>= compile
   where read = readTextFile UTF8 path
         compile s =
@@ -24,7 +25,7 @@ main [path] = read >>= compile
            #  lmap show <<< parse
           >>~ lmap prettyError <<< runCheck <<< inferModule
           <#> unsafePartial pursModule
-           #  either error log
+           #  either (\e -> error e *> exit 1) log
 main _ = log "Usage: tdlc <path>"
 
 --------------------------------------------------------------------------------

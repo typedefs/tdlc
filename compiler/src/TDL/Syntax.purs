@@ -19,6 +19,7 @@ data Kind
 
 data Type
   = NamedType String
+  | AppliedType Type Type
   | PrimType PrimType
   | ProductType (Array (Tuple String Type))
   | SumType (Array (Tuple String Type))
@@ -27,6 +28,7 @@ data PrimType
   = I32Type
   | F64Type
   | TextType
+  | ArrayType
 
 derive instance eqKind :: Eq Kind
 derive instance eqType :: Eq Type

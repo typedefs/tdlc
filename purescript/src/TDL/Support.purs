@@ -5,11 +5,13 @@ module TDL.Support
   , serializeI32
   , serializeF64
   , serializeText
+  , serializeArray
   , serializeProduct
   , serializeVariant
   , deserializeI32
   , deserializeF64
   , deserializeText
+  , deserializeArray
   , deserializeProduct
   , deserializeSum
   , unsafeIndex
@@ -21,6 +23,7 @@ import Data.Array as Array
 import Data.Either (Either(..), either)
 import Data.Int as Int
 import Data.Maybe (maybe)
+import Data.Traversable (traverse)
 import Partial.Unsafe (unsafePartial)
 import Prelude
 
@@ -32,6 +35,9 @@ serializeF64 = Json.fromNumber
 
 serializeText :: String -> Json
 serializeText = Json.fromString
+
+serializeArray :: forall a. (a -> Json) -> Array a -> Json
+serializeArray f = Json.fromArray <<< map f
 
 serializeProduct :: Array Json -> Json
 serializeProduct = Json.fromArray
@@ -53,6 +59,11 @@ deserializeText :: Json -> Either String String
 deserializeText =
   Json.toString
   >>> maybe (Left "text was not serialized as a JSON string.") Right
+
+deserializeArray :: forall a. (Json -> Either String a) -> Json -> Either String (Array a)
+deserializeArray f j = do
+  a <- Json.toArray j # maybe (Left "array was not serialized as a JSON array.") Right
+  traverse f a
 
 deserializeProduct :: Int -> Json -> Either String (Array Json)
 deserializeProduct n j = do
