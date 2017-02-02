@@ -17,7 +17,7 @@ import TDL.LambdaCalculus (etaExpandType)
 import TDL.Syntax (Declaration(..), Kind(..), Module, PrimType(..), Type(..))
 
 pursKindName :: Kind -> String
-pursKindName SeriKind = "*"
+pursKindName SeriKind = "Type"
 pursKindName (ArrowKind k i) = "(" <> pursKindName k <> " " <> pursKindName i <> ")"
 
 pursTypeName :: Type -> String
