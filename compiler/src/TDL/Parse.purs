@@ -11,7 +11,7 @@ import Data.List ((:), List(Nil))
 import Data.String as String
 import Data.Tuple.Nested ((/\))
 import Prelude
-import TDL.Syntax (Declaration(..), Kind(..), Module, PrimType(..), Type(..))
+import TDL.Syntax (Declaration(..), Kind(..), Module(..), PrimType(..), Type(..))
 import Text.Parsing.StringParser (ParseError, Parser, runParser)
 import Text.Parsing.StringParser as P
 import Text.Parsing.StringParser.Combinators as PC
@@ -20,7 +20,7 @@ import Text.Parsing.StringParser.String as PS
 --------------------------------------------------------------------------------
 
 parse :: String -> Either ParseError Module
-parse = runParser module_
+parse = runParser (module_ <* PS.eof)
 
 --------------------------------------------------------------------------------
 
@@ -59,7 +59,12 @@ type' _ = application
 --------------------------------------------------------------------------------
 
 module_ :: Parser Module
-module_ = PC.many declaration <* PS.eof
+module_ = do
+  moduleKeyword
+  name <- identifier
+  semicolonPunc
+  declarations <- PC.many declaration <* PS.eof
+  pure $ Module name declarations
 
 declaration :: Parser Declaration
 declaration = do
@@ -82,7 +87,7 @@ lexeme p = blank *> p <* blank
 identifier :: Parser String
 identifier = lexeme do
   name <- String.fromCharArray <<< Array.fromFoldable <$> PC.many1 PS.alphaNum
-  guard (name `Array.notElem` ["array", "f64", "i32", "product", "sum", "text", "type"])
+  guard (name `Array.notElem` ["array", "f64", "i32", "product", "sum", "module", "text", "type"])
   pure name
 
 arrayKeyword :: Parser Unit
@@ -93,6 +98,9 @@ f64Keyword = void $ lexeme $ PS.string "f64"
 
 i32Keyword :: Parser Unit
 i32Keyword = void $ lexeme $ PS.string "i32"
+
+moduleKeyword :: Parser Unit
+moduleKeyword = void $ lexeme $ PS.string "module"
 
 productKeyword :: Parser Unit
 productKeyword = void $ lexeme $ PS.string "product"

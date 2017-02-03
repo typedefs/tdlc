@@ -14,7 +14,7 @@ import Data.String as String
 import Data.Tuple.Nested ((/\))
 import Prelude
 import TDL.LambdaCalculus (etaExpandType)
-import TDL.Syntax (Declaration(..), Kind(..), Module, PrimType(..), Type(..))
+import TDL.Syntax (Declaration(..), Kind(..), Module(..), PrimType(..), Type(..))
 
 pursKindName :: Kind -> String
 pursKindName SeriKind = "Type"
@@ -109,7 +109,7 @@ pursDeserialize (SumType ts) =
                | otherwise = "TDLSUPPORT.Right TDLSUPPORT.<<< " <> path (n - 1)
 
 pursModule :: Module -> String
-pursModule m =
+pursModule (Module _ m) =
      "import TDL.Support as TDLSUPPORT\n"
   <> foldMap pursDeclaration m
 

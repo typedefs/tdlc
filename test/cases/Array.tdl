@@ -1,3 +1,5 @@
+module Array;
+
 type Ints : * = array i32;
 
 type Units : * = array product { };

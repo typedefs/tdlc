@@ -23,7 +23,7 @@ import Data.Maybe (maybe)
 import Data.Traversable (traverse_)
 import Data.Tuple (snd)
 import Prelude
-import TDL.Syntax (Declaration(..), Kind(..), Module, PrimType(..), Type(..))
+import TDL.Syntax (Declaration(..), Kind(..), Module(..), PrimType(..), Type(..))
 
 --------------------------------------------------------------------------------
 
@@ -74,7 +74,7 @@ assertKind k k' = when (k /= k') $ throwError (KindError k k')
 --------------------------------------------------------------------------------
 
 inferModule :: Module -> Check Unit
-inferModule ds = do
+inferModule (Module _ ds) = do
   mappings <- List.foldM (\a b -> Map.union a <$> inferDeclaration b) Map.empty ds
   Reader.local (Map.union mappings) $
     traverse_ checkDeclaration ds

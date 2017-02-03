@@ -1,3 +1,5 @@
+module Recursion;
+
 type Nil : * = product { };
 type Cons : * = product { head: i32, tail: List };
 type List : * = sum { nil: Nil, cons: Cons };

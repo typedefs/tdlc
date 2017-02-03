@@ -1,3 +1,5 @@
+module Product;
+
 type UserID : * = text;
 type User : * = product {
   id: UserID,
