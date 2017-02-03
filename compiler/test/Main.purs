@@ -7,7 +7,6 @@ import Control.Monad.Eff.Console (CONSOLE, log)
 import Data.Either (Either(..))
 import Data.List ((:), List(Nil))
 import Data.Tuple.Nested ((/\))
-import Partial.Unsafe (unsafePartial)
 import Prelude
 import Test.Assert (ASSERT, assert)
 import TDL.Check (inferKind, inferModule, runCheck)
@@ -50,5 +49,5 @@ main = do
     testModule m = assert $ runCheck (inferModule (Module "M" (Doc "") m)) == Right unit
     exampleType t = do
       log $ pursTypeName t
-      log $ unsafePartial pursSerialize t
-    exampleModule m = log $ unsafePartial pursModule (Module "M" (Doc "") m)
+      log $ pursSerialize t
+    exampleModule m = log $ pursModule (Module "M" (Doc "") m)

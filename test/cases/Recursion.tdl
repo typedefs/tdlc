@@ -1,9 +1,16 @@
+## Examples of recursive types.
 module Recursion;
 
+## Empty list.
 type Nil : * = product { };
+
+## Non-empty list.
 type Cons : * = product { head: i32, tail: List };
+
+## List.
 type List : * = sum { nil: Nil, cons: Cons };
 
+## Another list.
 type List2 : * = sum {
   nil: product { },
   cons: product { head: i32, tail: List2 },

@@ -96,7 +96,7 @@ doc :: Parser Doc
 doc = lexeme $ Doc <<< foldMap (_ <> "\n") <$> PC.many line
   where line = String.fromCharArray <<< Array.fromFoldable <$> line'
         line' =     P.try (PS.string "##\n" $> Nil)
-                <|>       (PS.string "##" *> PS.anyChar `PC.manyTill` PS.char '\n')
+                <|>       (PS.string "## " *> PS.anyChar `PC.manyTill` PS.char '\n')
 
 arrayKeyword :: Parser Unit
 arrayKeyword = void $ lexeme $ PS.string "array"
