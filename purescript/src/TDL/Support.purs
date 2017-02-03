@@ -2,14 +2,17 @@ module TDL.Support
   ( module Data.Argonaut.Core
   , module Data.Either
   , module Prelude
+  , eqArray
   , serializeI32
   , serializeF64
   , serializeText
+  , serializeArray
   , serializeProduct
   , serializeVariant
   , deserializeI32
   , deserializeF64
   , deserializeText
+  , deserializeArray
   , deserializeProduct
   , deserializeSum
   , unsafeIndex
@@ -19,10 +22,15 @@ import Data.Argonaut.Core (Json)
 import Data.Argonaut.Core as Json
 import Data.Array as Array
 import Data.Either (Either(..), either)
+import Data.Foldable (and)
 import Data.Int as Int
 import Data.Maybe (maybe)
+import Data.Traversable (traverse)
 import Partial.Unsafe (unsafePartial)
 import Prelude
+
+eqArray :: forall a. (a -> a -> Boolean) -> Array a -> Array a -> Boolean
+eqArray f a b = Array.length a == Array.length b && and (Array.zipWith f a b)
 
 serializeI32 :: Int -> Json
 serializeI32 = Json.fromNumber <<< Int.toNumber
@@ -32,6 +40,9 @@ serializeF64 = Json.fromNumber
 
 serializeText :: String -> Json
 serializeText = Json.fromString
+
+serializeArray :: forall a. (a -> Json) -> Array a -> Json
+serializeArray f = Json.fromArray <<< map f
 
 serializeProduct :: Array Json -> Json
 serializeProduct = Json.fromArray
@@ -53,6 +64,11 @@ deserializeText :: Json -> Either String String
 deserializeText =
   Json.toString
   >>> maybe (Left "text was not serialized as a JSON string.") Right
+
+deserializeArray :: forall a. (Json -> Either String a) -> Json -> Either String (Array a)
+deserializeArray f j = do
+  a <- Json.toArray j # maybe (Left "array was not serialized as a JSON array.") Right
+  traverse f a
 
 deserializeProduct :: Int -> Json -> Either String (Array Json)
 deserializeProduct n j = do

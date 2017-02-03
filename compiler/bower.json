@@ -19,7 +19,8 @@
     "purescript-bifunctors": "^2.0.0",
     "purescript-node-fs": "^3.0.0",
     "purescript-node-buffer": "^2.0.0",
-    "purescript-exceptions": "^2.0.0"
+    "purescript-exceptions": "^2.0.0",
+    "purescript-node-process": "^3.0.0"
   },
   "devDependencies": {
     "purescript-assert": "^2.0.0"

@@ -13,23 +13,32 @@ import Data.List as List
 import Data.String as String
 import Data.Tuple.Nested ((/\))
 import Prelude
-import TDL.Syntax (Declaration(..), Module, PrimType(..), Type(..))
+import TDL.LambdaCalculus (etaExpandType)
+import TDL.Syntax (Declaration(..), Kind(..), Module, PrimType(..), Type(..))
+
+pursKindName :: Kind -> String
+pursKindName SeriKind = "Type"
+pursKindName (ArrowKind k i) = "(" <> pursKindName k <> " " <> pursKindName i <> ")"
 
 pursTypeName :: Type -> String
 pursTypeName (NamedType n) = n
-pursTypeName (PrimType I32Type)  = "Int"
-pursTypeName (PrimType F64Type)  = "Number"
-pursTypeName (PrimType TextType) = "String"
+pursTypeName (AppliedType t u) = "(" <> pursTypeName t <> " " <> pursTypeName u <> ")"
+pursTypeName (PrimType I32Type)   = "Int"
+pursTypeName (PrimType F64Type)   = "Number"
+pursTypeName (PrimType TextType)  = "String"
+pursTypeName (PrimType ArrayType) = "Array"
 pursTypeName (ProductType ts) = "{" <> String.joinWith ", " entries <> "}"
   where entries = map (\(k /\ t) -> k <> " :: " <> pursTypeName t) ts
 pursTypeName (SumType ts) = foldr step "TDLSUPPORT.Void" ts
   where step (_ /\ t) u = "(TDLSUPPORT.Either " <> pursTypeName t <> " " <> u <> ")"
 
 pursEq :: Type -> String
-pursEq (NamedType n) = "(TDLSUPPORT.eq :: " <> n <> " -> " <> n <> " -> Boolean)"
-pursEq (PrimType I32Type) = "(TDLSUPPORT.eq :: Int -> Int -> Boolean)"
-pursEq (PrimType F64Type) = "(TDLSUPPORT.eq :: Number -> Number -> Boolean)"
-pursEq (PrimType TextType) = "(TDLSUPPORT.eq :: String -> String -> Boolean)"
+pursEq t@(NamedType _)       = pursNominalEq t
+pursEq (AppliedType t u)     = "(" <> pursEq t <> " " <> pursEq u <> ")"
+pursEq t@(PrimType I32Type)  = pursNominalEq t
+pursEq t@(PrimType F64Type)  = pursNominalEq t
+pursEq t@(PrimType TextType) = pursNominalEq t
+pursEq (PrimType ArrayType)  = "TDLSUPPORT.eqArray"
 pursEq (ProductType ts) =
   "(\\tdl__a tdl__b -> " <> foldr (\a b -> a <> " TDLSUPPORT.&& " <> b) "true" entries <> ")"
   where entries = map entry ts
@@ -43,11 +52,17 @@ pursEq (SumType ts) =
         path n v | n <= 0    = "TDLSUPPORT.Left " <> v
                  | otherwise = "TDLSUPPORT.Right (" <> path (n - 1) v <> ")"
 
+pursNominalEq :: Type -> String
+pursNominalEq t = "(TDLSUPPORT.eq :: " <> n <> " -> " <> n <> " -> Boolean)"
+  where n = pursTypeName t
+
 pursSerialize :: Type -> String
 pursSerialize (NamedType n) = "serialize" <> n
-pursSerialize (PrimType I32Type)  = "TDLSUPPORT.serializeI32"
-pursSerialize (PrimType F64Type)  = "TDLSUPPORT.serializeF64"
-pursSerialize (PrimType TextType) = "TDLSUPPORT.serializeText"
+pursSerialize (AppliedType t u) = "(" <> pursSerialize t <> " " <> pursSerialize u <> ")"
+pursSerialize (PrimType I32Type)   = "TDLSUPPORT.serializeI32"
+pursSerialize (PrimType F64Type)   = "TDLSUPPORT.serializeF64"
+pursSerialize (PrimType TextType)  = "TDLSUPPORT.serializeText"
+pursSerialize (PrimType ArrayType) = "TDLSUPPORT.serializeArray"
 pursSerialize (ProductType ts) =
   "(\\tdl__r -> TDLSUPPORT.serializeProduct [" <> String.joinWith ", " entries <> "])"
   where entries = map (\(k /\ t) -> pursSerialize t <> " tdl__r." <> k) ts
@@ -61,9 +76,11 @@ pursSerialize (SumType ts) = go 0 (List.fromFoldable ts)
 
 pursDeserialize :: Type -> String
 pursDeserialize (NamedType n) = "deserialize" <> n
-pursDeserialize (PrimType I32Type)  = "TDLSUPPORT.deserializeI32"
-pursDeserialize (PrimType F64Type)  = "TDLSUPPORT.deserializeF64"
-pursDeserialize (PrimType TextType) = "TDLSUPPORT.deserializeText"
+pursDeserialize (AppliedType t u) = "(" <> pursDeserialize t <> " " <> pursDeserialize u <> ")"
+pursDeserialize (PrimType I32Type)   = "TDLSUPPORT.deserializeI32"
+pursDeserialize (PrimType F64Type)   = "TDLSUPPORT.deserializeF64"
+pursDeserialize (PrimType TextType)  = "TDLSUPPORT.deserializeText"
+pursDeserialize (PrimType ArrayType) = "TDLSUPPORT.deserializeArray"
 pursDeserialize (ProductType ts) =
   "(\\tdl__r -> "
   <> "TDLSUPPORT.deserializeProduct " <> show (Array.length ts) <> " tdl__r"
@@ -97,19 +114,31 @@ pursModule m =
   <> foldMap pursDeclaration m
 
 pursDeclaration :: Declaration -> String
-pursDeclaration (TypeDeclaration n _ t) =
-     "newtype " <> n <> " = " <> n <> " " <> pursTypeName t <> "\n"
-  <> "instance eq" <> n <> " :: TDLSUPPORT.Eq " <> n <> " where\n"
-  <> "  eq (" <> n <> " tdl__a) (" <> n <> " tdl__b) =\n"
-  <> indent (indent ("(" <> pursEq t <> ") tdl__a tdl__b")) <> "\n"
-  <> "serialize" <> n <> " :: " <> n <> " -> TDLSUPPORT.Json\n"
-  <> "serialize" <> n <> " (" <> n <> " tdl__a) =\n"
-  <> "  " <> pursSerialize t <> " tdl__a\n"
-  <> "deserialize" <> n
-  <> " :: TDLSUPPORT.Json -> TDLSUPPORT.Either String " <> n <> "\n"
-  <> "deserialize" <> n <> " =\n"
-  <> indent (pursDeserialize t) <> "\n"
-  <> "  TDLSUPPORT.>>> TDLSUPPORT.map " <> n <> "\n"
+pursDeclaration (TypeDeclaration n k t) =
+  case etaExpandType k t of
+    {params, type: t'} ->
+      let params' = map (\(p /\ k) -> " (" <> p <> " :: " <> pursKindName k <> ")") params in
+         "newtype " <> n <> fold params' <> " = " <> n <> " " <> pursTypeName t' <> "\n"
+      <> (if k == SeriKind then eqInstance          else "")
+      <> (if k == SeriKind then serializeFunction   else "")
+      <> (if k == SeriKind then deserializeFunction else "")
+  where
+    eqInstance =
+         "instance eq" <> n <> " :: TDLSUPPORT.Eq " <> n <> " where\n"
+      <> "  eq (" <> n <> " tdl__a) (" <> n <> " tdl__b) =\n"
+      <> indent (indent ("(" <> pursEq t <> ") tdl__a tdl__b")) <> "\n"
+
+    serializeFunction =
+         "serialize" <> n <> " :: " <> n <> " -> TDLSUPPORT.Json\n"
+      <> "serialize" <> n <> " (" <> n <> " tdl__a) =\n"
+      <> "  " <> pursSerialize t <> " tdl__a\n"
+
+    deserializeFunction =
+         "deserialize" <> n
+      <> " :: TDLSUPPORT.Json -> TDLSUPPORT.Either String " <> n <> "\n"
+      <> "deserialize" <> n <> " =\n"
+      <> indent (pursDeserialize t) <> "\n"
+      <> "  TDLSUPPORT.>>> TDLSUPPORT.map " <> n <> "\n"
 
 indent :: String -> String
 indent =
