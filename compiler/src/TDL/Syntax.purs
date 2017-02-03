@@ -5,6 +5,8 @@ module TDL.Syntax
 
   , Module(..)
   , Declaration(..)
+
+  , Doc(..)
   ) where
 
 import Data.List (List)
@@ -36,7 +38,11 @@ derive instance eqPrimType :: Eq PrimType
 
 --------------------------------------------------------------------------------
 
-data Module = Module String (List Declaration)
+data Module = Module String Doc (List Declaration)
 
 data Declaration
-  = TypeDeclaration String Kind Type
+  = TypeDeclaration String Doc Kind Type
+
+--------------------------------------------------------------------------------
+
+newtype Doc = Doc String

@@ -74,15 +74,15 @@ assertKind k k' = when (k /= k') $ throwError (KindError k k')
 --------------------------------------------------------------------------------
 
 inferModule :: Module -> Check Unit
-inferModule (Module _ ds) = do
+inferModule (Module _ _ ds) = do
   mappings <- List.foldM (\a b -> Map.union a <$> inferDeclaration b) Map.empty ds
   Reader.local (Map.union mappings) $
     traverse_ checkDeclaration ds
 
 inferDeclaration :: Declaration -> Check Environment
-inferDeclaration (TypeDeclaration n k _) = pure $ Map.singleton n k
+inferDeclaration (TypeDeclaration n _ k _) = pure $ Map.singleton n k
 
 checkDeclaration :: Declaration -> Check Unit
-checkDeclaration (TypeDeclaration _ k t) = do
+checkDeclaration (TypeDeclaration _ _ k t) = do
   k' <- inferKind t
   assertKind k k'

@@ -1,3 +1,7 @@
+## Integers
+## are
+## fun!
 module Int;
 
+## An integer!
 type Pax : * = i32;
