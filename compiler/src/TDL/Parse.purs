@@ -37,27 +37,24 @@ type_ :: Parser Type
 type_ = pure unit >>= \_ -> type' unit
 
 type' :: Unit -> Parser Type
-type' _ =
-      P.try (ProductType <<< Array.fromFoldable <$> field `sepEndBy1SepMandatory` asteriskPunc)
-  <|> P.try (SumType     <<< Array.fromFoldable <$> field `sepEndBy1SepMandatory` plusPunc)
-  <|>       application
+type' _ = application
   where
-    field = P.try $ (/\) <$> identifier <*> (colonPunc *> simple)
     application = foldl AppliedType <$> simple <*> PC.many simple
+
     simple =     P.try (NamedType <$> identifier)
              <|>       keywordType
+             <|>       compoundType productKeyword ProductType
+             <|>       compoundType sumKeyword     SumType
              <|>       (leftParenPunc *> type_ <* rightParenPunc)
+
     keywordType =     (PrimType ArrayType <$ arrayKeyword)
                   <|> (PrimType I32Type   <$ i32Keyword)
                   <|> (PrimType F64Type   <$ f64Keyword)
                   <|> (PrimType TextType  <$ textKeyword)
-                  <|> (ProductType []     <$ unitKeyword)
-                  <|> (SumType     []     <$ voidKeyword)
-    sepEndBy1SepMandatory p sep = do
-      a <- p
-      (do sep
-          as <- PC.sepEndBy p sep
-          pure (a : as)) <|> ((a : Nil) <$ sep)
+
+    compoundType kw c = kw *> leftBracePunc *> (c <$> fields) <* rightBracePunc
+    fields = Array.fromFoldable <$> field `PC.sepEndBy` commaPunc
+    field  = P.try $ (/\) <$> identifier <*> (colonPunc *> type_)
 
 --------------------------------------------------------------------------------
 
@@ -85,7 +82,7 @@ lexeme p = blank *> p <* blank
 identifier :: Parser String
 identifier = lexeme do
   name <- String.fromCharArray <<< Array.fromFoldable <$> PC.many1 PS.alphaNum
-  guard (name `Array.notElem` ["array", "f64", "i32", "text", "type", "unit", "void"])
+  guard (name `Array.notElem` ["array", "f64", "i32", "product", "sum", "text", "type"])
   pure name
 
 arrayKeyword :: Parser Unit
@@ -97,20 +94,23 @@ f64Keyword = void $ lexeme $ PS.string "f64"
 i32Keyword :: Parser Unit
 i32Keyword = void $ lexeme $ PS.string "i32"
 
+productKeyword :: Parser Unit
+productKeyword = void $ lexeme $ PS.string "product"
+
+sumKeyword :: Parser Unit
+sumKeyword = void $ lexeme $ PS.string "sum"
+
 textKeyword :: Parser Unit
 textKeyword = void $ lexeme $ PS.string "text"
 
 typeKeyword :: Parser Unit
 typeKeyword = void $ lexeme $ PS.string "type"
 
-unitKeyword :: Parser Unit
-unitKeyword = void $ lexeme $ PS.string "unit"
-
-voidKeyword :: Parser Unit
-voidKeyword = void $ lexeme $ PS.string "void"
-
 asteriskPunc :: Parser Unit
 asteriskPunc = void $ lexeme $ PS.char '*'
+
+commaPunc :: Parser Unit
+commaPunc = void $ lexeme $ PS.char ','
 
 colonPunc :: Parser Unit
 colonPunc = void $ lexeme $ PS.char ':'
@@ -118,14 +118,17 @@ colonPunc = void $ lexeme $ PS.char ':'
 equalsSignPunc :: Parser Unit
 equalsSignPunc = void $ lexeme $ PS.char '='
 
+leftBracePunc :: Parser Unit
+leftBracePunc = void $ lexeme $ PS.char '{'
+
 leftParenPunc :: Parser Unit
 leftParenPunc = void $ lexeme $ PS.char '('
 
-plusPunc :: Parser Unit
-plusPunc = void $ lexeme $ PS.char '+'
-
 rightArrowPunc :: Parser Unit
 rightArrowPunc = void $ lexeme $ PS.string "->"
+
+rightBracePunc :: Parser Unit
+rightBracePunc = void $ lexeme $ PS.char '}'
 
 rightParenPunc :: Parser Unit
 rightParenPunc = void $ lexeme $ PS.char ')'

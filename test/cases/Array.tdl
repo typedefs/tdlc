@@ -1,5 +1,5 @@
 type Ints : * = array i32;
 
-type Units : * = array unit;
+type Units : * = array product { };
 
 type List : * -> * = array;

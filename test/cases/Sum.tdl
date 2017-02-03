@@ -1,5 +1,5 @@
-type Zero : * = void;
-type One : * = unit;
-type Maybe : * = just:i32 + nothing:One;
+type Zero : * = sum { };
+type One : * = product { };
+type Maybe : * = sum { just: i32, nothing: One };
 
 /* comment */
