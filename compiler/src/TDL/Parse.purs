@@ -70,13 +70,20 @@ module_ = do
 declaration :: Parser Declaration
 declaration = do
   doc' <- doc
+
   typeKeyword
   name <- identifier
   colonPunc
   typeKind <- kind_
+  semicolonPunc
+
+  typeKeyword
+  name' <- identifier
+  guard $ name' == name
   equalsSignPunc
   original <- type_
   semicolonPunc
+
   pure $ TypeDeclaration name doc' typeKind original
 
 --------------------------------------------------------------------------------
