@@ -9,8 +9,6 @@ type User = product {
   age: i32,
 };
 
-type Singleton1 : *;
 type Singleton1 = product { id: UserID };
 
-type Singleton2 : *;
 type Singleton2 = sum { id: UserID };

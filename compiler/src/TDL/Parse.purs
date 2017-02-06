@@ -7,7 +7,8 @@ import Control.MonadZero (guard)
 import Data.Array as Array
 import Data.Either (Either)
 import Data.Foldable (foldl, foldMap, foldr)
-import Data.List ((:), List(Nil))
+import Data.Maybe (Maybe(..), maybe)
+import Data.List (List(Nil))
 import Data.String as String
 import Data.Tuple.Nested ((/\))
 import Prelude
@@ -71,18 +72,22 @@ declaration :: Parser Declaration
 declaration = do
   doc' <- doc
 
-  typeKeyword
-  name <- identifier
-  colonPunc
-  typeKind <- kind_
-  semicolonPunc
+  {name: sigName, typeKind} <-
+    P.try (do typeKeyword
+              name <- identifier
+              colonPunc
+              typeKind <- kind_
+              semicolonPunc
+              pure {name: Just name, typeKind})
+    <|> pure {name: Nothing, typeKind: SeriKind}
 
   typeKeyword
-  name' <- identifier
-  guard $ name' == name
+  name <- identifier
   equalsSignPunc
   original <- type_
   semicolonPunc
+
+  guard $ maybe true (name == _) sigName
 
   pure $ TypeDeclaration name doc' typeKind original
 
