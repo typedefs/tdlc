@@ -12,7 +12,7 @@ import Prelude
 import Test.Assert (ASSERT, assert)
 import TDL.Check (inferKind, inferModule, runCheck)
 import TDL.Extraction.PureScript (pursModule, pursSerialize, pursTypeName)
-import TDL.Syntax (Declaration(..), Kind(..), PrimType(..), Type(..))
+import TDL.Syntax (Declaration(..), Kind(..), Module(..), PrimType(..), Type(..))
 
 main :: forall eff. Eff (assert :: ASSERT, console :: CONSOLE | eff) Unit
 main = do
@@ -47,8 +47,8 @@ main = do
 
   where
     testKind t k = assert $ runCheck (inferKind t) == Right k
-    testModule m = assert $ runCheck (inferModule m) == Right unit
+    testModule m = assert $ runCheck (inferModule (Module "M" m)) == Right unit
     exampleType t = do
       log $ pursTypeName t
       log $ unsafePartial pursSerialize t
-    exampleModule m = log $ unsafePartial pursModule m
+    exampleModule m = log $ unsafePartial pursModule (Module "M" m)

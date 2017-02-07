@@ -3,7 +3,7 @@ module TDL.Syntax
   , Type(..)
   , PrimType(..)
 
-  , Module
+  , Module(..)
   , Declaration(..)
   ) where
 
@@ -36,7 +36,7 @@ derive instance eqPrimType :: Eq PrimType
 
 --------------------------------------------------------------------------------
 
-type Module = List Declaration
+data Module = Module String (List Declaration)
 
 data Declaration
   = TypeDeclaration String Kind Type

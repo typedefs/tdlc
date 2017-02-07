@@ -1,3 +1,5 @@
+module Sum;
+
 type Zero : * = sum { };
 type One : * = product { };
 type Maybe : * = sum { just: i32, nothing: One };
