@@ -26,7 +26,7 @@ serialize (I32 i) = Json.fromNumber <<< Int.toNumber $ i
 serialize (F64 f) = Json.fromNumber f
 serialize (Boolean b) = Json.fromBoolean b
 serialize (String t) = Json.fromString t
-serialize (Blob b) = Json.fromString $ BS.toString b BS.Base64
+serialize (Bytes b) = Json.fromString $ BS.toString b BS.Base64
 serialize (Array xs) = Json.fromArray <<< map serialize $ xs
 serialize (Object xs) = Json.fromObject <<< map serialize $ xs
 

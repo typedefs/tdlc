@@ -15,7 +15,7 @@ import Data.StrMap
 data Intermediate
   = Null
   | String String
-  | Blob ByteString
+  | Bytes ByteString
   | I32 Int
   | F64 Number
   | Boolean Boolean
@@ -31,8 +31,8 @@ fromF64 = F64
 fromText :: String -> Intermediate
 fromText = String
 
-fromByteString :: ByteString -> Intermediate
-fromByteString = Blob
+fromBytes :: ByteString -> Intermediate
+fromBytes = Bytes
 
 fromArray :: forall a. (a -> Intermediate) -> Array a -> Intermediate
 fromArray f = Array <<< map f
@@ -61,14 +61,14 @@ toText :: Intermediate -> Either String String
 toText (String str) = Right str
 toText _ = Left "text was not serialized as a string."
 
-toByteString :: Intermediate -> Either String ByteString
-toByteString (Blob bytes) = Right bytes
-toByteString (String str) = do
+toBytes :: Intermediate -> Either String ByteString
+toBytes (Bytes bytes) = Right bytes
+toBytes (String str) = do
   let decoded = BS.fromString str BS.Base64
   if BS.toString decoded BS.Base64 == str
     then Right decoded
     else Left "bytestring was not serialized as a base64-encoded string"
-toByteString _ = Left "bytestring was not serialized as a string or byte array"
+toBytes _ = Left "bytestring was not serialized as a string or byte array"
 
 toArray :: forall a. (Intermediate -> Either String a) -> Intermediate -> Either String (Array a)
 toArray f (Array xs) = traverse f xs
