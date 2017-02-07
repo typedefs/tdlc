@@ -1,7 +1,10 @@
 module Array;
 
-type Ints : * = array i32;
+type Ints : *;
+type Ints = array i32;
 
-type Units : * = array product { };
+type Units : *;
+type Units = array product { };
 
-type List : * -> * = array;
+type List : * -> *;
+type List = array;

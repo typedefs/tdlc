@@ -1,7 +1,12 @@
 module Sum;
 
-type Zero : * = sum { };
-type One : * = product { };
-type Maybe : * = sum { just: i32, nothing: One };
+type Zero : *;
+type Zero = sum { };
+
+type One : *;
+type One = product { };
+
+type Maybe : *;
+type Maybe = sum { just: i32, nothing: One };
 
 /* comment */

@@ -2,16 +2,20 @@
 module Recursion;
 
 ## Empty list.
-type Nil : * = product { };
+type Nil : *;
+type Nil = product { };
 
 ## Non-empty list.
-type Cons : * = product { head: i32, tail: List };
+type Cons : *;
+type Cons = product { head: i32, tail: List };
 
 ## List.
-type List : * = sum { nil: Nil, cons: Cons };
+type List : *;
+type List = sum { nil: Nil, cons: Cons };
 
 ## Another list.
-type List2 : * = sum {
+type List2 : *;
+type List2 = sum {
   nil: product { },
   cons: product { head: i32, tail: List2 },
 };
