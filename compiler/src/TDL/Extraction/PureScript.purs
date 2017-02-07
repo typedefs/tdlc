@@ -57,33 +57,33 @@ pursNominalEq t = "(TDLSUPPORT.eq :: " <> n <> " -> " <> n <> " -> Boolean)"
   where n = pursTypeName t
 
 pursSerialize :: Type -> String
-pursSerialize (NamedType n) = "serialize" <> n
+pursSerialize (NamedType n) = "intermediateFrom" <> n
 pursSerialize (AppliedType t u) = "(" <> pursSerialize t <> " " <> pursSerialize u <> ")"
-pursSerialize (PrimType I32Type)   = "TDLSUPPORT.serializeI32"
-pursSerialize (PrimType F64Type)   = "TDLSUPPORT.serializeF64"
-pursSerialize (PrimType TextType)  = "TDLSUPPORT.serializeText"
-pursSerialize (PrimType ArrayType) = "TDLSUPPORT.serializeArray"
+pursSerialize (PrimType I32Type)   = "TDLSUPPORT.fromI32"
+pursSerialize (PrimType F64Type)   = "TDLSUPPORT.fromF64"
+pursSerialize (PrimType TextType)  = "TDLSUPPORT.fromText"
+pursSerialize (PrimType ArrayType) = "TDLSUPPORT.fromArray"
 pursSerialize (ProductType ts) =
-  "(\\tdl__r -> TDLSUPPORT.serializeProduct [" <> String.joinWith ", " entries <> "])"
+  "(\\tdl__r -> TDLSUPPORT.fromProduct [" <> String.joinWith ", " entries <> "])"
   where entries = map (\(k /\ t) -> pursSerialize t <> " tdl__r." <> k) ts
 pursSerialize (SumType ts) = go 0 (List.fromFoldable ts)
   where go _ Nil = "TDLSUPPORT.absurd"
         go n ((_ /\ head) : tail) =
           "(TDLSUPPORT.either "
-          <> "(TDLSUPPORT.serializeVariant " <> show n <> " " <> pursSerialize head <> ") "
+          <> "(TDLSUPPORT.fromVariant " <> show n <> " " <> pursSerialize head <> ") "
           <> go (n + 1) tail
           <> ")"
 
 pursDeserialize :: Type -> String
-pursDeserialize (NamedType n) = "deserialize" <> n
+pursDeserialize (NamedType n) = "intermediateTo" <> n
 pursDeserialize (AppliedType t u) = "(" <> pursDeserialize t <> " " <> pursDeserialize u <> ")"
-pursDeserialize (PrimType I32Type)   = "TDLSUPPORT.deserializeI32"
-pursDeserialize (PrimType F64Type)   = "TDLSUPPORT.deserializeF64"
-pursDeserialize (PrimType TextType)  = "TDLSUPPORT.deserializeText"
-pursDeserialize (PrimType ArrayType) = "TDLSUPPORT.deserializeArray"
+pursDeserialize (PrimType I32Type)   = "TDLSUPPORT.toI32"
+pursDeserialize (PrimType F64Type)   = "TDLSUPPORT.toF64"
+pursDeserialize (PrimType TextType)  = "TDLSUPPORT.toText"
+pursDeserialize (PrimType ArrayType) = "TDLSUPPORT.toArray"
 pursDeserialize (ProductType ts) =
   "(\\tdl__r -> "
-  <> "TDLSUPPORT.deserializeProduct " <> show (Array.length ts) <> " tdl__r"
+  <> "TDLSUPPORT.toProduct " <> show (Array.length ts) <> " tdl__r"
   <> " TDLSUPPORT.>>= \\tdl__r' ->\n"
   <> record <> ")"
   where
@@ -98,7 +98,7 @@ pursDeserialize (ProductType ts) =
       pursDeserialize t <> " (TDLSUPPORT.unsafeIndex tdl__r' " <> show i <> ")"
 pursDeserialize (SumType ts) =
   "(\\tdl__r ->"
-  <> " TDLSUPPORT.deserializeSum tdl__r"
+  <> " TDLSUPPORT.toSum tdl__r"
   <> " TDLSUPPORT.>>= case _ of\n" <> fold (Array.mapWithIndex entry ts)
   <> "  {d: _} -> TDLSUPPORT.Left " <> show "Sum discriminator was out of bounds."
   <> ")"
@@ -111,6 +111,7 @@ pursDeserialize (SumType ts) =
 pursModule :: Module -> String
 pursModule (Module _ _ m) =
      "import TDL.Support as TDLSUPPORT\n"
+  <> "import TDL.Intermediate as TDLSUPPORT\n"
   <> foldMap pursDeclaration m
 
 pursDeclaration :: Declaration -> String
@@ -129,14 +130,14 @@ pursDeclaration (TypeDeclaration n _ k t) =
       <> indent (indent ("(" <> pursEq t <> ") tdl__a tdl__b")) <> "\n"
 
     serializeFunction =
-         "serialize" <> n <> " :: " <> n <> " -> TDLSUPPORT.Json\n"
-      <> "serialize" <> n <> " (" <> n <> " tdl__a) =\n"
+         "intermediateFrom" <> n <> " :: " <> n <> " -> TDLSUPPORT.Intermediate\n"
+      <> "intermediateFrom" <> n <> " (" <> n <> " tdl__a) =\n"
       <> "  " <> pursSerialize t <> " tdl__a\n"
 
     deserializeFunction =
-         "deserialize" <> n
-      <> " :: TDLSUPPORT.Json -> TDLSUPPORT.Either String " <> n <> "\n"
-      <> "deserialize" <> n <> " =\n"
+         "intermediateTo" <> n
+      <> " :: TDLSUPPORT.Intermediate -> TDLSUPPORT.Either String " <> n <> "\n"
+      <> "intermediateTo" <> n <> " =\n"
       <> indent (pursDeserialize t) <> "\n"
       <> "  TDLSUPPORT.>>> TDLSUPPORT.map " <> n <> "\n"
 

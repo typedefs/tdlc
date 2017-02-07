@@ -2,7 +2,7 @@ module Main where
 
 import Data.Either (Either(..))
 import Prelude
-import TDLOutput (Pax(..), deserializePax, serializePax)
+import TDLOutput (Pax(..), intermediateToPax, intermediateFromPax)
 
 pax :: Unit -> Boolean
-pax _ = deserializePax (serializePax (Pax 1)) == Right (Pax 1)
+pax _ = intermediateToPax (intermediateFromPax (Pax 1)) == Right (Pax 1)
