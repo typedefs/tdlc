@@ -65,6 +65,7 @@ inferKind (PrimType I32Type)   = pure SeriKind
 inferKind (PrimType F64Type)   = pure SeriKind
 inferKind (PrimType TextType)  = pure SeriKind
 inferKind (PrimType ArrayType) = pure (ArrowKind SeriKind SeriKind)
+inferKind (PrimType BytesType) = pure SeriKind
 inferKind (ProductType ts) = SeriKind <$ traverse_ (assertKind SeriKind <=< inferKind <<< snd) ts
 inferKind (SumType     ts) = SeriKind <$ traverse_ (assertKind SeriKind <=< inferKind <<< snd) ts
 

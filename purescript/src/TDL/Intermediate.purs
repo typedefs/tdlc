@@ -67,8 +67,8 @@ toBytes (String str) = do
   let decoded = BS.fromString str BS.Base64
   if BS.toString decoded BS.Base64 == str
     then Right decoded
-    else Left "bytestring was not serialized as a base64-encoded string"
-toBytes _ = Left "bytestring was not serialized as a string or byte array"
+    else Left "bytes was not serialized as a base64-encoded string"
+toBytes _ = Left "bytes was not serialized as a string or byte array"
 
 toArray :: forall a. (Intermediate -> Either String a) -> Intermediate -> Either String (Array a)
 toArray f (Array xs) = traverse f xs
