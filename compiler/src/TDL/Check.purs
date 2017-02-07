@@ -61,6 +61,7 @@ inferKind (AppliedType t u) =
       assertKind kt1 ku
       pure kt2
     _ -> throwError ApplyError
+inferKind (PrimType BoolType)  = pure SeriKind
 inferKind (PrimType I32Type)   = pure SeriKind
 inferKind (PrimType F64Type)   = pure SeriKind
 inferKind (PrimType TextType)  = pure SeriKind

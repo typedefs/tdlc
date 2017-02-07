@@ -18,7 +18,7 @@ data Intermediate
   | Bytes ByteString
   | I32 Int
   | F64 Number
-  | Boolean Boolean
+  | Bool Boolean
   | Array (Array Intermediate)
   | Object (StrMap Intermediate)
 
@@ -27,6 +27,9 @@ fromI32 = I32
 
 fromF64 :: Number -> Intermediate
 fromF64 = F64
+
+fromBool :: Boolean -> Intermediate
+fromBool = Bool
 
 fromText :: String -> Intermediate
 fromText = String
@@ -56,6 +59,10 @@ toF64 :: Intermediate -> Either String Number
 toF64 (F64 f) = Right f
 toF64 (I32 i) = Right (Int.toNumber i)
 toF64 _ = Left "f64 was not serialized as a number."
+
+toBool :: Intermediate -> Either String Boolean
+toBool (Bool b) = Right b
+toBool _ = Left "bool was not serialized as a Boolean."
 
 toText :: Intermediate -> Either String String
 toText (String str) = Right str

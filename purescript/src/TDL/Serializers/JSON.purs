@@ -24,7 +24,7 @@ serialize :: Intermediate -> Json
 serialize Intermediate.Null = Json.jsonNull
 serialize (I32 i) = Json.fromNumber <<< Int.toNumber $ i
 serialize (F64 f) = Json.fromNumber f
-serialize (Boolean b) = Json.fromBoolean b
+serialize (Bool b) = Json.fromBoolean b
 serialize (String t) = Json.fromString t
 serialize (Bytes b) = Json.fromString $ BS.toString b BS.Base64
 serialize (Array xs) = Json.fromArray <<< map serialize $ xs
@@ -35,7 +35,7 @@ deserialize json = fromMaybe Intermediate.Null $
   (Object <<< map deserialize <$> Json.toObject json) <|>
   (Array <<< map deserialize <$> Json.toArray json) <|>
   (F64 <$> Json.toNumber json) <|>
-  (Boolean <$> Json.toBoolean json) <|>
+  (Bool <$> Json.toBoolean json) <|>
   (String <$> Json.toString json)
 
 unsafeIndex :: forall a. Array a -> Int -> a
