@@ -1,5 +1,6 @@
 module TDL.Support
   ( module Data.Argonaut.Core
+  , module Data.ByteString
   , module Data.Either
   , module Prelude
   , eqArray
@@ -9,6 +10,7 @@ module TDL.Support
 import Data.Argonaut.Core (Json)
 import Data.Argonaut.Core as Json
 import Data.Array as Array
+import Data.ByteString (ByteString)
 import Data.Either (Either(..), either)
 import Data.Foldable (and)
 import Data.Int as Int

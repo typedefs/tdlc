@@ -27,6 +27,7 @@ pursTypeName (PrimType I32Type)   = "Int"
 pursTypeName (PrimType F64Type)   = "Number"
 pursTypeName (PrimType TextType)  = "String"
 pursTypeName (PrimType ArrayType) = "Array"
+pursTypeName (PrimType BytesType) = "TDLSUPPORT.ByteString"
 pursTypeName (ProductType ts) = "{" <> String.joinWith ", " entries <> "}"
   where entries = map (\(k /\ t) -> k <> " :: " <> pursTypeName t) ts
 pursTypeName (SumType ts) = foldr step "TDLSUPPORT.Void" ts
@@ -35,10 +36,11 @@ pursTypeName (SumType ts) = foldr step "TDLSUPPORT.Void" ts
 pursEq :: Type -> String
 pursEq t@(NamedType _)       = pursNominalEq t
 pursEq (AppliedType t u)     = "(" <> pursEq t <> " " <> pursEq u <> ")"
-pursEq t@(PrimType I32Type)  = pursNominalEq t
-pursEq t@(PrimType F64Type)  = pursNominalEq t
-pursEq t@(PrimType TextType) = pursNominalEq t
-pursEq (PrimType ArrayType)  = "TDLSUPPORT.eqArray"
+pursEq t@(PrimType I32Type)   = pursNominalEq t
+pursEq t@(PrimType F64Type)   = pursNominalEq t
+pursEq t@(PrimType TextType)  = pursNominalEq t
+pursEq (PrimType ArrayType)   = "TDLSUPPORT.eqArray"
+pursEq t@(PrimType BytesType) = pursNominalEq t
 pursEq (ProductType ts) =
   "(\\tdl__a tdl__b -> " <> foldr (\a b -> a <> " TDLSUPPORT.&& " <> b) "true" entries <> ")"
   where entries = map entry ts
@@ -63,6 +65,7 @@ pursSerialize (PrimType I32Type)   = "TDLSUPPORT.fromI32"
 pursSerialize (PrimType F64Type)   = "TDLSUPPORT.fromF64"
 pursSerialize (PrimType TextType)  = "TDLSUPPORT.fromText"
 pursSerialize (PrimType ArrayType) = "TDLSUPPORT.fromArray"
+pursSerialize (PrimType BytesType) = "TDLSUPPORT.fromBytes"
 pursSerialize (ProductType ts) =
   "(\\tdl__r -> TDLSUPPORT.fromProduct [" <> String.joinWith ", " entries <> "])"
   where entries = map (\(k /\ t) -> pursSerialize t <> " tdl__r." <> k) ts
@@ -81,6 +84,7 @@ pursDeserialize (PrimType I32Type)   = "TDLSUPPORT.toI32"
 pursDeserialize (PrimType F64Type)   = "TDLSUPPORT.toF64"
 pursDeserialize (PrimType TextType)  = "TDLSUPPORT.toText"
 pursDeserialize (PrimType ArrayType) = "TDLSUPPORT.toArray"
+pursDeserialize (PrimType BytesType) = "TDLSUPPORT.toBytes"
 pursDeserialize (ProductType ts) =
   "(\\tdl__r -> "
   <> "TDLSUPPORT.toProduct " <> show (Array.length ts) <> " tdl__r"

@@ -38,6 +38,7 @@ data PrimType
   | F64Type
   | TextType
   | ArrayType
+  | BytesType
 
 derive instance eqKind :: Eq Kind
 derive instance eqType :: Eq Type
@@ -77,6 +78,7 @@ prettyType (PrimType I32Type)   = "i32"
 prettyType (PrimType F64Type)   = "f64"
 prettyType (PrimType TextType)  = "text"
 prettyType (PrimType ArrayType) = "array"
+prettyType (PrimType BytesType) = "bytes"
 prettyType (ProductType []) = "product { }"
 prettyType (SumType     []) = "sum { }"
 prettyType (ProductType ts) =
