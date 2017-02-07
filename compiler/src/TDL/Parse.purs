@@ -6,12 +6,12 @@ import Control.Alternative ((<|>))
 import Control.MonadZero (guard)
 import Data.Array as Array
 import Data.Either (Either)
-import Data.Foldable (foldl, foldr)
+import Data.Foldable (foldl, foldMap, foldr)
 import Data.List ((:), List(Nil))
 import Data.String as String
 import Data.Tuple.Nested ((/\))
 import Prelude
-import TDL.Syntax (Declaration(..), Kind(..), Module(..), PrimType(..), Type(..))
+import TDL.Syntax (Declaration(..), Doc(..), Kind(..), Module(..), PrimType(..), Type(..))
 import Text.Parsing.StringParser (ParseError, Parser, runParser)
 import Text.Parsing.StringParser as P
 import Text.Parsing.StringParser.Combinators as PC
@@ -60,14 +60,16 @@ type' _ = application
 
 module_ :: Parser Module
 module_ = do
+  doc' <- doc
   moduleKeyword
   name <- identifier
   semicolonPunc
   declarations <- PC.many declaration <* PS.eof
-  pure $ Module name declarations
+  pure $ Module name doc' declarations
 
 declaration :: Parser Declaration
 declaration = do
+  doc' <- doc
   typeKeyword
   name <- identifier
   colonPunc
@@ -75,7 +77,7 @@ declaration = do
   equalsSignPunc
   original <- type_
   semicolonPunc
-  pure $ TypeDeclaration name typeKind original
+  pure $ TypeDeclaration name doc' typeKind original
 
 --------------------------------------------------------------------------------
 
@@ -87,8 +89,14 @@ lexeme p = blank *> p <* blank
 identifier :: Parser String
 identifier = lexeme do
   name <- String.fromCharArray <<< Array.fromFoldable <$> PC.many1 PS.alphaNum
-  guard (name `Array.notElem` ["array", "f64", "i32", "product", "sum", "module", "text", "type"])
+  guard (name `Array.notElem` ["array", "f64", "i32", "module", "product", "sum", "text", "type"])
   pure name
+
+doc :: Parser Doc
+doc = lexeme $ Doc <<< foldMap (_ <> "\n") <$> PC.many line
+  where line = String.fromCharArray <<< Array.fromFoldable <$> line'
+        line' =     P.try (PS.string "##\n" $> Nil)
+                <|>       (PS.string "## " *> PS.anyChar `PC.manyTill` PS.char '\n')
 
 arrayKeyword :: Parser Unit
 arrayKeyword = void $ lexeme $ PS.string "array"

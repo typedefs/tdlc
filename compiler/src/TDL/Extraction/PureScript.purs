@@ -109,12 +109,12 @@ pursDeserialize (SumType ts) =
                | otherwise = "TDLSUPPORT.Right TDLSUPPORT.<<< " <> path (n - 1)
 
 pursModule :: Module -> String
-pursModule (Module _ m) =
+pursModule (Module _ _ m) =
      "import TDL.Support as TDLSUPPORT\n"
   <> foldMap pursDeclaration m
 
 pursDeclaration :: Declaration -> String
-pursDeclaration (TypeDeclaration n k t) =
+pursDeclaration (TypeDeclaration n _ k t) =
   case etaExpandType k t of
     {params, type: t'} ->
       let params' = map (\(p /\ k) -> " (" <> p <> " :: " <> pursKindName k <> ")") params in
