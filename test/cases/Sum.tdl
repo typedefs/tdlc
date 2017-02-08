@@ -1,4 +1,4 @@
-module Sum;
+module TDLOutput;
 
 type Zero : *;
 type Zero = sum { };

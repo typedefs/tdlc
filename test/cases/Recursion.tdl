@@ -1,5 +1,5 @@
 ## Examples of recursive types.
-module Recursion;
+module TDLOutput;
 
 ## Empty list.
 type Nil : *;

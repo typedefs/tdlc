@@ -1,4 +1,4 @@
-module Array;
+module TDLOutput;
 
 type Ints : *;
 type Ints = array i32;

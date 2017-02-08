@@ -117,8 +117,9 @@ pursDeserialize (SumType ts) =
                | otherwise = "TDLSUPPORT.Right TDLSUPPORT.<<< " <> path (n - 1)
 
 pursModule :: Module -> String
-pursModule (Module _ _ m) =
-     "import TDL.Support as TDLSUPPORT\n"
+pursModule (Module n _ m) =
+     "module " <> n <> " where\n"
+  <> "import TDL.Support as TDLSUPPORT\n"
   <> "import TDL.Intermediate as TDLSUPPORT\n"
   <> foldMap pursDeclaration m
 
