@@ -23,6 +23,7 @@ pursKindName (ArrowKind k i) = "(" <> pursKindName k <> " " <> pursKindName i <>
 pursTypeName :: Type -> String
 pursTypeName (NamedType n) = n
 pursTypeName (AppliedType t u) = "(" <> pursTypeName t <> " " <> pursTypeName u <> ")"
+pursTypeName (PrimType BoolType)  = "Boolean"
 pursTypeName (PrimType I32Type)   = "Int"
 pursTypeName (PrimType F64Type)   = "Number"
 pursTypeName (PrimType TextType)  = "String"
@@ -36,6 +37,7 @@ pursTypeName (SumType ts) = foldr step "TDLSUPPORT.Void" ts
 pursEq :: Type -> String
 pursEq t@(NamedType _)       = pursNominalEq t
 pursEq (AppliedType t u)     = "(" <> pursEq t <> " " <> pursEq u <> ")"
+pursEq t@(PrimType BoolType)  = pursNominalEq t
 pursEq t@(PrimType I32Type)   = pursNominalEq t
 pursEq t@(PrimType F64Type)   = pursNominalEq t
 pursEq t@(PrimType TextType)  = pursNominalEq t
@@ -61,6 +63,7 @@ pursNominalEq t = "(TDLSUPPORT.eq :: " <> n <> " -> " <> n <> " -> Boolean)"
 pursSerialize :: Type -> String
 pursSerialize (NamedType n) = "intermediateFrom" <> n
 pursSerialize (AppliedType t u) = "(" <> pursSerialize t <> " " <> pursSerialize u <> ")"
+pursSerialize (PrimType BoolType)  = "TDLSUPPORT.fromBool"
 pursSerialize (PrimType I32Type)   = "TDLSUPPORT.fromI32"
 pursSerialize (PrimType F64Type)   = "TDLSUPPORT.fromF64"
 pursSerialize (PrimType TextType)  = "TDLSUPPORT.fromText"
@@ -80,6 +83,7 @@ pursSerialize (SumType ts) = go 0 (List.fromFoldable ts)
 pursDeserialize :: Type -> String
 pursDeserialize (NamedType n) = "intermediateTo" <> n
 pursDeserialize (AppliedType t u) = "(" <> pursDeserialize t <> " " <> pursDeserialize u <> ")"
+pursDeserialize (PrimType BoolType)  = "TDLSUPPORT.toBool"
 pursDeserialize (PrimType I32Type)   = "TDLSUPPORT.toI32"
 pursDeserialize (PrimType F64Type)   = "TDLSUPPORT.toF64"
 pursDeserialize (PrimType TextType)  = "TDLSUPPORT.toText"

@@ -49,6 +49,7 @@ type' _ = application
              <|>       (leftParenPunc *> type_ <* rightParenPunc)
 
     keywordType =     (PrimType ArrayType <$ arrayKeyword)
+                  <|> (PrimType BoolType  <$ boolKeyword)
                   <|> (PrimType I32Type   <$ i32Keyword)
                   <|> (PrimType F64Type   <$ f64Keyword)
                   <|> (PrimType TextType  <$ textKeyword)
@@ -102,7 +103,7 @@ lexeme p = blank *> p <* blank
 identifier :: Parser String
 identifier = lexeme do
   name <- String.fromCharArray <<< Array.fromFoldable <$> PC.many1 PS.alphaNum
-  guard (name `Array.notElem` ["array", "bytes", "f64", "i32", "module", "product", "sum", "text", "type"])
+  guard (name `Array.notElem` ["array", "bool", "bytes", "f64", "i32", "module", "product", "sum", "text", "type"])
   pure name
 
 doc :: Parser Doc
@@ -113,6 +114,9 @@ doc = lexeme $ Doc <<< foldMap (_ <> "\n") <$> PC.many line
 
 arrayKeyword :: Parser Unit
 arrayKeyword = void $ lexeme $ PS.string "array"
+
+boolKeyword :: Parser Unit
+boolKeyword = void $ lexeme $ PS.string "bool"
 
 bytesKeyword :: Parser Unit
 bytesKeyword = void $ lexeme $ PS.string "bytes"

@@ -34,7 +34,8 @@ data Type
   | SumType (Array (Tuple String Type))
 
 data PrimType
-  = I32Type
+  = BoolType
+  | I32Type
   | F64Type
   | TextType
   | ArrayType
@@ -74,6 +75,7 @@ prettyType (AppliedType t u) = prettyType t <> " " <> prettyType' u
         prettyType' t@(PrimType _)      = prettyType t
         prettyType' t@(ProductType _)   = prettyType t
         prettyType' t@(SumType _)       = prettyType t
+prettyType (PrimType BoolType)  = "bool"
 prettyType (PrimType I32Type)   = "i32"
 prettyType (PrimType F64Type)   = "f64"
 prettyType (PrimType TextType)  = "text"
