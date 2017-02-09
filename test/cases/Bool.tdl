@@ -1,3 +1,3 @@
-module Bool;
+module TDLOutput;
 
 type OK = bool;
