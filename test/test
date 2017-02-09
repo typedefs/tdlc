@@ -40,7 +40,6 @@ def test_cases():
                 universal_newlines=True)
             output_filename = os.path.join(tmp_path, 'TDLOutput.purs')
             with open(output_filename, 'w') as f:
-                print('module TDLOutput where', file=f)
                 print(tdl_output, file=f)
 
             with chdir('purescript'):

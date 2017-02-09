@@ -65,7 +65,8 @@ module_ :: Parser Module
 module_ = do
   doc' <- doc
   moduleKeyword
-  name <- identifier
+  name <- String.joinWith "." <<< Array.fromFoldable
+            <$> identifier `PC.sepBy1` periodPunc
   semicolonPunc
   declarations <- PC.many declaration <* PS.eof
   pure $ Module name doc' declarations
@@ -159,6 +160,9 @@ leftBracePunc = void $ lexeme $ PS.char '{'
 
 leftParenPunc :: Parser Unit
 leftParenPunc = void $ lexeme $ PS.char '('
+
+periodPunc :: Parser Unit
+periodPunc = void $ lexeme $ PS.char '.'
 
 rightArrowPunc :: Parser Unit
 rightArrowPunc = void $ lexeme $ PS.string "->"

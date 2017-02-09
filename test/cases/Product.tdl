@@ -1,4 +1,4 @@
-module Product;
+module TDLOutput;
 
 type UserID : *;
 type UserID = text;

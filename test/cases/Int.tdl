@@ -1,7 +1,7 @@
 ## Integers
 ## are
 ## fun!
-module Int;
+module TDLOutput;
 
 ## An integer!
 type Pax : *;
