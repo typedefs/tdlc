@@ -116,6 +116,9 @@ pursDeserialize (SumType ts) =
         path n | n <= 0    = "TDLSUPPORT.Left"
                | otherwise = "TDLSUPPORT.Right TDLSUPPORT.<<< " <> path (n - 1)
 
+pursHash :: Type -> String
+pursHash t = "(TDLSUPPORT.hash " <> pursSerialize t <> ")"
+
 pursModule :: Module -> String
 pursModule (Module n _ m) =
      "module " <> n <> " where\n"
@@ -132,6 +135,7 @@ pursDeclaration (TypeDeclaration n _ k t) =
       <> (if k == SeriKind then eqInstance          else "")
       <> (if k == SeriKind then serializeFunction   else "")
       <> (if k == SeriKind then deserializeFunction else "")
+      <> (if k == SeriKind then hashFunction        else "")
   where
     eqInstance =
          "instance eq" <> n <> " :: TDLSUPPORT.Eq " <> n <> " where\n"
@@ -149,6 +153,11 @@ pursDeclaration (TypeDeclaration n _ k t) =
       <> "intermediateTo" <> n <> " =\n"
       <> indent (pursDeserialize t) <> "\n"
       <> "  TDLSUPPORT.>>> TDLSUPPORT.map " <> n <> "\n"
+
+    hashFunction =
+         "hash" <> n <> " :: " <> n <> " -> TDLSUPPORT.ByteString\n"
+      <> "hash" <> n <> " =\n"
+      <> "  " <> pursHash (NamedType n) <> "\n"
 
 indent :: String -> String
 indent =
