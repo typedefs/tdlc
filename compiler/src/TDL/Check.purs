@@ -7,7 +7,7 @@ module TDL.Check
 
   , inferKind
 
-  , checkSumAppearance
+  , checkSumTopLevelness
 
   , inferModule
   , inferDeclaration
@@ -38,7 +38,7 @@ data Error
   = NameError String
   | KindError Kind Kind
   | ApplyError
-  | SumAppearanceError
+  | SumTopLevelnessError
 
 derive instance eqError :: Eq Error
 
@@ -48,7 +48,7 @@ prettyError (KindError a b) = "'" <> f a <> "' /= '" <> f b <> "'."
   where f SeriKind = "*"
         f (ArrowKind k k') = "(" <> f k <> " -> " <> f k' <> ")"
 prettyError (ApplyError) = "applied type was not a type constructor."
-prettyError (SumAppearanceError) =
+prettyError (SumTopLevelnessError) =
   "non-void sum type appeared as part of other type."
 
 runCheck :: forall a. Check a -> Either Error a
@@ -82,8 +82,8 @@ assertKind k k' = when (k /= k') $ throwError (KindError k k')
 --------------------------------------------------------------------------------
 
 -- | Check that non-void sum types only appear at the top level.
-checkSumAppearance :: Type -> Check Unit
-checkSumAppearance = outer
+checkSumTopLevelness :: Type -> Check Unit
+checkSumTopLevelness = outer
   where
     outer (SumType ts) = traverse_ (inner <<< snd) ts
     outer t = inner t
@@ -93,7 +93,7 @@ checkSumAppearance = outer
     inner (PrimType _)      = pure unit
     inner (ProductType ts)  = traverse_ (inner <<< snd) ts
     inner (SumType [])      = pure unit
-    inner (SumType _)       = throwError SumAppearanceError
+    inner (SumType _)       = throwError SumTopLevelnessError
 
 --------------------------------------------------------------------------------
 
@@ -108,6 +108,6 @@ inferDeclaration (TypeDeclaration n _ k _) = pure $ Map.singleton n k
 
 checkDeclaration :: Declaration -> Check Unit
 checkDeclaration (TypeDeclaration _ _ k t) = do
-  checkSumAppearance t
+  checkSumTopLevelness t
   k' <- inferKind t
   assertKind k k'
