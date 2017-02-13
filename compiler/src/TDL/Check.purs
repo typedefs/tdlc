@@ -7,8 +7,11 @@ module TDL.Check
 
   , inferKind
 
+  , checkSumTopLevelness
+
   , inferModule
   , inferDeclaration
+  , checkDeclaration
   ) where
 
 import Control.Monad.Error.Class (throwError)
@@ -35,6 +38,7 @@ data Error
   = NameError String
   | KindError Kind Kind
   | ApplyError
+  | SumTopLevelnessError
 
 derive instance eqError :: Eq Error
 
@@ -44,6 +48,8 @@ prettyError (KindError a b) = "'" <> f a <> "' /= '" <> f b <> "'."
   where f SeriKind = "*"
         f (ArrowKind k k') = "(" <> f k <> " -> " <> f k' <> ")"
 prettyError (ApplyError) = "applied type was not a type constructor."
+prettyError (SumTopLevelnessError) =
+  "non-void sum type appeared as part of other type."
 
 runCheck :: forall a. Check a -> Either Error a
 runCheck m = runExcept (runReaderT m Map.empty)
@@ -75,6 +81,22 @@ assertKind k k' = when (k /= k') $ throwError (KindError k k')
 
 --------------------------------------------------------------------------------
 
+-- | Check that non-void sum types only appear at the top level.
+checkSumTopLevelness :: Type -> Check Unit
+checkSumTopLevelness = outer
+  where
+    outer (SumType ts) = traverse_ (inner <<< snd) ts
+    outer t = inner t
+
+    inner (NamedType _)     = pure unit
+    inner (AppliedType t u) = inner t *> inner u
+    inner (PrimType _)      = pure unit
+    inner (ProductType ts)  = traverse_ (inner <<< snd) ts
+    inner (SumType [])      = pure unit
+    inner (SumType _)       = throwError SumTopLevelnessError
+
+--------------------------------------------------------------------------------
+
 inferModule :: Module -> Check Unit
 inferModule (Module _ _ ds) = do
   mappings <- List.foldM (\a b -> Map.union a <$> inferDeclaration b) Map.empty ds
@@ -86,5 +108,6 @@ inferDeclaration (TypeDeclaration n _ k _) = pure $ Map.singleton n k
 
 checkDeclaration :: Declaration -> Check Unit
 checkDeclaration (TypeDeclaration _ _ k t) = do
+  checkSumTopLevelness t
   k' <- inferKind t
   assertKind k k'
