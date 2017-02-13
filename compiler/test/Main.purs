@@ -41,7 +41,7 @@ main = do
                 : TypeDeclaration "U" (Doc "") SeriKind (ProductType ["x" /\ (PrimType I32Type), "y" /\ NamedType "T"])
                 : Nil
   exampleModule $ TypeDeclaration "T" (Doc "") SeriKind (PrimType I32Type)
-                : TypeDeclaration "U" (Doc "") SeriKind (ProductType ["x" /\ (PrimType I32Type), "y" /\ ProductType []])
+                : TypeDeclaration "U" (Doc "") SeriKind (SumType ["x" /\ (PrimType I32Type), "y" /\ ProductType []])
                 : Nil
 
   where

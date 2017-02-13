@@ -8,13 +8,13 @@ module TDL.Extraction.PureScript
 
 import Data.Array as Array
 import Data.Foldable (fold, foldMap, foldr)
-import Data.List ((:), List(Nil))
-import Data.List as List
 import Data.String as String
+import Data.Tuple (Tuple)
 import Data.Tuple.Nested ((/\))
 import Prelude
 import TDL.LambdaCalculus (etaExpandType)
 import TDL.Syntax (Declaration(..), Kind(..), Module(..), PrimType(..), Type(..))
+import Partial.Unsafe (unsafeCrashWith)
 
 pursKindName :: Kind -> String
 pursKindName SeriKind = "Type"
@@ -31,8 +31,8 @@ pursTypeName (PrimType ArrayType) = "Array"
 pursTypeName (PrimType BytesType) = "TDLSUPPORT.ByteString"
 pursTypeName (ProductType ts) = "{" <> String.joinWith ", " entries <> "}"
   where entries = map (\(k /\ t) -> k <> " :: " <> pursTypeName t) ts
-pursTypeName (SumType ts) = foldr step "TDLSUPPORT.Void" ts
-  where step (_ /\ t) u = "(TDLSUPPORT.Either " <> pursTypeName t <> " " <> u <> ")"
+pursTypeName (SumType []) = "TDLSUPPORT.Void"
+pursTypeName (SumType _) = unsafeCrashWith "pursTypeName: SumType _"
 
 pursEq :: Type -> String
 pursEq t@(NamedType _)       = pursNominalEq t
@@ -72,13 +72,8 @@ pursSerialize (PrimType BytesType) = "TDLSUPPORT.fromBytes"
 pursSerialize (ProductType ts) =
   "(\\tdl__r -> TDLSUPPORT.fromProduct [" <> String.joinWith ", " entries <> "])"
   where entries = map (\(k /\ t) -> pursSerialize t <> " tdl__r." <> k) ts
-pursSerialize (SumType ts) = go 0 (List.fromFoldable ts)
-  where go _ Nil = "TDLSUPPORT.absurd"
-        go n ((_ /\ head) : tail) =
-          "(TDLSUPPORT.either "
-          <> "(TDLSUPPORT.fromVariant " <> show n <> " " <> pursSerialize head <> ") "
-          <> go (n + 1) tail
-          <> ")"
+pursSerialize (SumType []) = "TDLSUPPORT.absurd"
+pursSerialize (SumType _) = unsafeCrashWith "pursSerialize: SumType _"
 
 pursDeserialize :: Type -> String
 pursDeserialize (NamedType n) = "intermediateTo" <> n
@@ -104,17 +99,9 @@ pursDeserialize (ProductType ts) =
           )
     entry i (_ /\ t) =
       pursDeserialize t <> " (TDLSUPPORT.unsafeIndex tdl__r' " <> show i <> ")"
-pursDeserialize (SumType ts) =
-  "(\\tdl__r ->"
-  <> " TDLSUPPORT.toSum tdl__r"
-  <> " TDLSUPPORT.>>= case _ of\n" <> fold (Array.mapWithIndex entry ts)
-  <> "  {d: _} -> TDLSUPPORT.Left " <> show "Sum discriminator was out of bounds."
-  <> ")"
-  where entry i (_ /\ t) =
-          "  {d: " <> show i <> ", x: tdl__x} -> " <> path i <> " TDLSUPPORT.<$>\n"
-          <> indent (indent (pursDeserialize t)) <> " tdl__x\n"
-        path n | n <= 0    = "TDLSUPPORT.Left"
-               | otherwise = "TDLSUPPORT.Right TDLSUPPORT.<<< " <> path (n - 1)
+pursDeserialize (SumType []) =
+  "(\\_ -> TDLSUPPORT.Left " <> show "Sum discriminator was out of bounds." <> ")"
+pursDeserialize (SumType _) = unsafeCrashWith "pursDeserialize: SumType _"
 
 pursModule :: Module -> String
 pursModule (Module n _ m) =
@@ -125,6 +112,54 @@ pursModule (Module n _ m) =
 
 pursDeclaration :: Declaration -> String
 pursDeclaration (TypeDeclaration n _ k t) =
+  case t of
+    SumType [] -> pursTypeDeclaration n k t
+    SumType ts -> pursSumDeclaration n ts
+    _ -> pursTypeDeclaration n k t
+
+pursSumDeclaration :: String -> Array (Tuple String Type) -> String
+pursSumDeclaration n ts =
+  adt
+  <> eqInstance
+  <> serializeFunction
+  <> deserializeFunction
+  where
+    adt = "data " <> n <> "\n  = " <> String.joinWith "\n  | " (map adtEntry ts) <> "\n"
+    adtEntry (k /\ t) = n <> "_" <> k <> " " <> pursTypeName t
+
+    eqInstance =
+         "instance eq" <> n <> " :: TDLSUPPORT.Eq " <> n <> " where\n"
+      <> foldMap eqMethod ts
+      <> "  eq _ _ = false\n"
+    eqMethod (k /\ t) =
+      "  eq (" <> n <> "_" <> k <> " tdl__a)"
+      <>  " (" <> n <> "_" <> k <> " tdl__b)"
+      <> " =\n"
+      <> indent (indent ("(" <> pursEq t <> ") tdl__a tdl__b")) <> "\n"
+
+    serializeFunction =
+         "intermediateFrom" <> n <> " :: " <> n <> " -> TDLSUPPORT.Intermediate\n"
+      <> fold (Array.mapWithIndex serializeCase ts)
+    serializeCase i (k /\ t) =
+         "intermediateFrom" <> n <> " (" <> n <> "_" <> k <> " tdl__a) =\n"
+      <> indent ("TDLSUPPORT.fromVariant "
+                    <> show i <> " "
+                    <> pursSerialize t <> " "
+                    <> "tdl__a") <> "\n"
+
+    deserializeFunction =
+         "intermediateTo" <> n
+      <> " :: TDLSUPPORT.Intermediate -> TDLSUPPORT.Either String " <> n <> "\n"
+      <> "intermediateTo" <> n <> " = TDLSUPPORT.toSum TDLSUPPORT.>=> case _ of\n"
+      <> fold (Array.mapWithIndex deserializeCase ts)
+      <> "  {d: _} -> TDLSUPPORT.Left " <> show "Sum discriminator was out of bounds." <> "\n"
+    deserializeCase i (k /\ t) =
+         "  {d: " <> show i <> ", x: tdl__x} ->\n"
+      <> indent (indent (pursDeserialize t)) <> " tdl__x "
+      <> "TDLSUPPORT.<#> " <> n <> "_" <> k <> "\n"
+
+pursTypeDeclaration :: String -> Kind -> Type -> String
+pursTypeDeclaration n k t =
   case etaExpandType k t of
     {params, type: t'} ->
       let params' = map (\(p /\ k) -> " (" <> p <> " :: " <> pursKindName k <> ")") params in
@@ -141,7 +176,7 @@ pursDeclaration (TypeDeclaration n _ k t) =
     serializeFunction =
          "intermediateFrom" <> n <> " :: " <> n <> " -> TDLSUPPORT.Intermediate\n"
       <> "intermediateFrom" <> n <> " (" <> n <> " tdl__a) =\n"
-      <> "  " <> pursSerialize t <> " tdl__a\n"
+      <> indent (pursSerialize t <> " tdl__a") <> "\n"
 
     deserializeFunction =
          "intermediateTo" <> n
