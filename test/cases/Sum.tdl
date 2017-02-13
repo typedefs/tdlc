@@ -10,3 +10,5 @@ type Maybe : *;
 type Maybe = sum { just: i32, nothing: One };
 
 /* comment */
+
+type EmptyArray = array sum { };
