@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <title>TDL</title>
+    <script async src="//cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-MML-AM_CHTML"></script>
+    <style>
+      body {
+        font-family: sans-serif;
+        font-size: 10pt;
+        margin: 14pt auto;
+        max-width: 700px;
+        padding: 0 14pt;
+        text-rendering: optimizeLegibility;
+      }
+
+      h1 {
+        color: #A0187D;
+
+        line-height: 14pt;
+      }
+
+      section > *:not(h1):not(section) {
+        margin-left: 14pt;
+        margin-right: 14pt;
+      }
+
+      p {
+        line-height: 14pt;
+        margin: 14pt 0;
+      }
+
+      table {
+        border-spacing: 0;
+        width: 100%;
+      }
+
+      th {
+        text-align: left;
+      }
+
+      th, td {
+        line-height: 14pt;
+      }
+
+      tr:nth-child(odd) > td {
+        background: #DDD;
+      }
+
+      th:not(:first-child), td:not(:first-child) {
+        padding-left: 14pt;
+      }
+    </style>
+  </head>
+  <body>
+    <div style="display: none;">
+      $$
+        \newcommand{\Seri}{\mathtt{\star}}
+        \newcommand{\Rec}[1]{\mathtt{product} \left\{ #1 \right\}}
+        \newcommand{\Sum}[1]{\mathtt{sum} \left\{ #1 \right\}}
+        \newcommand{\irule}[2]{\displaystyle \frac{#1}{#2}}
+        \newcommand{\axiom}[1]{\irule{}{#1}}
+        \newcommand{\G}{\Gamma \vdash}
+      $$
+    </div>
+    <article>
+      <h1>TDL</h1>
+      <p>
+        TDL is a language for describing data types. These data types can be
+        converted into data types in other languages, along with operations such
+        as equality checks and serialization.
+      </p>
+      <section>
+        <h1>Syntax</h1>
+      </section>
+      <section>
+        <h1>Modules</h1>
+      </section>
+      <section>
+        <h1>Types</h1>
+        <p>
+          The type system of TDL features primitive types, product types, sum
+          types, parameterized types, and higher-kinded types.
+        </p>
+        <section>
+          <h1>Primitive Types</h1>
+          <p>
+            The following primitive types exist:
+          </p>
+          <table>
+            <thead>
+              <tr>
+                <th>Type</th>
+                <th>Kind</th>
+                <th>Summary</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><code>bool</code></td>
+                <td><code>*</code></td>
+                <td>Boolean</td>
+              </tr>
+              <tr>
+                <td><code>i32</code></td>
+                <td><code>*</code></td>
+                <td>32-bit signed integer, range \(\left[-2^{31}, 2^{31} - 1\right]\)</td>
+              </tr>
+              <tr>
+                <td><code>f64</code></td>
+                <td><code>*</code></td>
+                <td>IEEE 754 double precision floating point number</td>
+              </tr>
+              <tr>
+                <td><code>text</code></td>
+                <td><code>*</code></td>
+                <td>Unicode text</td>
+              </tr>
+              <tr>
+                <td><code>array</code></td>
+                <td><code>* -> *</code></td>
+                <td>Array of anything</td>
+              </tr>
+              <tr>
+                <td><code>bytes</code></td>
+                <td><code>*</code></td>
+                <td>Packed array of octets</td>
+              </tr>
+            </tbody>
+          </table>
+        </section>
+        <section>
+          <h1>Product Types</h1>
+        </section>
+        <section>
+          <h1>Sum Types</h1>
+          <p>
+            Due to code generation limitations, non-empty sum types may not be
+            part of other types; they must appear directly as top-level
+            definitions.
+          </p>
+        </section>
+        <section>
+          <h1>Kind Checking</h1>
+          <p>
+            TDL checks that types are well-kinded. For example, one cannot
+            apply the <code>array</code> type to two type arguments, as in
+            <code>array i32 i32</code>. The kind checker verifies this. The
+            kind checker applies the following inference rules:
+
+            $$
+              \begin{array}{ c l }
+                \irule{\tau : \kappa \in \Gamma}{\G \tau : \kappa} & \mathtt{Var} \\ \\
+                \irule{\G \tau : \kappa \rightarrow \iota \quad \G \sigma : \kappa}{\G \tau \sigma : \iota} & \mathtt{App} \\ \\
+                \irule{\G \overline{\tau_i : \Seri \vphantom{l}}}{\G \Rec{\overline{l_i : \tau_i}} : \Seri} & \mathtt{Product} \\ \\
+                \irule{\G \overline{\tau_i : \Seri \vphantom{l}}}{\G \Sum{\overline{l_i : \tau_i}} : \Seri} & \mathtt{Sum} \\ \\
+              \end{array}
+            $$
+          </p>
+        </section>
+      </section>
+    </article>
+  </body>
+</html>
