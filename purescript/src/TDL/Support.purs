@@ -8,6 +8,7 @@ module TDL.Support
   , hash
   ) where
 
+import Crypt.Hash.SHA256 (sha256)
 import Data.Argonaut.Core (Json)
 import Data.Argonaut.Core as Json
 import Data.Array as Array
@@ -30,4 +31,4 @@ unsafeIndex :: forall a. Array a -> Int -> a
 unsafeIndex = unsafePartial Array.unsafeIndex
 
 hash :: forall a. (a -> Intermediate) -> a -> ByteString
-hash s x = {- TODO $ -} ByteString.toUTF8 $ Json.stringify $ serialize $ s x
+hash s x = sha256 $ ByteString.toUTF8 $ Json.stringify $ serialize $ s x
