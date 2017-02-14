@@ -6,4 +6,4 @@ import TDLOutput (Cons(..), List(..), Nil(..), intermediateToList, intermediateF
 
 list :: Unit -> Boolean
 list _ = intermediateToList (intermediateFromList u) == Right u
-    where u = List $ Right $ Left (Cons {head: 1, tail: List $ Left (Nil {})})
+    where u = List_cons (Cons {head: 1, tail: List_nil (Nil {})})
