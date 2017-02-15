@@ -133,12 +133,11 @@ pursSumDeclaration n ts =
     eqInstance =
          "instance eq" <> n <> " :: TDLSUPPORT.Eq " <> n <> " where\n"
       <> foldMap eqMethod ts
-      <> "  eq _ _ = false\n"
     eqMethod (k /\ t) =
-      "  eq (" <> n <> "_" <> k <> " tdl__a)"
-      <>  " (" <> n <> "_" <> k <> " tdl__b)"
-      <> " =\n"
-      <> indent (indent ("(" <> pursEq t <> ") tdl__a tdl__b")) <> "\n"
+      "  eq (" <> n <> "_" <> k <> " tdl__a) = case _ of\n"
+      <> "    (" <> n <> "_" <> k <> " tdl__b) ->\n"
+      <> indent (indent (indent ("(" <> pursEq t <> ") tdl__a tdl__b"))) <> "\n"
+      <> "    _ -> false\n"
 
     serializeFunction =
          "intermediateFrom" <> n <> " :: " <> n <> " -> TDLSUPPORT.Intermediate\n"
