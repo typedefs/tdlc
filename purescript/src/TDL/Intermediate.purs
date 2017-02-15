@@ -9,8 +9,8 @@ import Data.Either (Either(..), either)
 import Data.Array as Array
 import Data.Int as Int
 import Data.Maybe (maybe)
+import Data.StrMap (StrMap)
 import Data.Traversable (traverse)
-import Data.StrMap
 
 data Intermediate
   = Null
