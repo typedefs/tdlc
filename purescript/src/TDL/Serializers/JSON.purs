@@ -5,20 +5,18 @@ module TDL.Serializers.JSON
   , deserialize
   ) where
 
-import TDL.Intermediate (Intermediate (..))
-import TDL.Intermediate as Intermediate
+import Control.Alt ( (<|>) )
 import Data.Argonaut.Core (Json)
 import Data.Argonaut.Core as Json
 import Data.Array as Array
+import Data.ByteString (toString) as BS
 import Data.Int as Int
 import Data.Maybe (fromMaybe)
-import Data.Traversable (traverse)
-import Partial.Unsafe (unsafePartial)
-import Data.ByteString (ByteString)
-import Data.ByteString (toString) as BS
 import Node.Encoding (Encoding (..)) as BS
-import Control.Alt ( (<|>) )
+import Partial.Unsafe (unsafePartial)
 import Prelude
+import TDL.Intermediate (Intermediate (..))
+import TDL.Intermediate as Intermediate
 
 serialize :: Intermediate -> Json
 serialize Intermediate.Null = Json.jsonNull
