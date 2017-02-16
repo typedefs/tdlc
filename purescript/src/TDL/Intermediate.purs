@@ -43,8 +43,8 @@ fromArray f = Array <<< map f
 fromProduct :: Array Intermediate -> Intermediate
 fromProduct = Array
 
-fromVariant :: forall a. Int -> (a -> Intermediate) -> a -> Intermediate
-fromVariant n f x = Array [I32 n, f x]
+fromSum :: forall a. String -> (a -> Intermediate) -> a -> Intermediate
+fromSum k f x = Array [String k, f x]
 
 toI32 :: Intermediate -> Either String Int
 toI32 (I32 i) =
@@ -89,10 +89,10 @@ toProduct n (Array xs) =
 toProduct _ _ =
   Left "Product was not serialized as an array."
 
-toSum :: Intermediate -> Either String {d :: Int, x :: Intermediate}
+toSum :: Intermediate -> Either String {d :: String, x :: Intermediate}
 toSum (Array xs) = do
   case xs of
-    [jd, x] -> {d: _, x} <$> toI32 jd
+    [jd, x] -> {d: _, x} <$> toText jd
     _ -> Left "Sum was serialized as an array of the wrong length."
 toSum _ =
   Left "Sum was not serialized as an array."

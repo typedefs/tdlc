@@ -100,7 +100,7 @@ pursDeserialize (ProductType ts) =
     entry i (_ /\ t) =
       pursDeserialize t <> " (TDLSUPPORT.unsafeIndex tdl__r' " <> show i <> ")"
 pursDeserialize (SumType []) =
-  "(\\_ -> TDLSUPPORT.Left " <> show "Sum discriminator was out of bounds." <> ")"
+  "(\\_ -> TDLSUPPORT.Left " <> show "Unknown sum discriminator." <> ")"
 pursDeserialize (SumType _) = unsafeCrashWith "pursDeserialize: SumType _"
 
 pursHash :: Type -> String
@@ -141,11 +141,11 @@ pursSumDeclaration n ts =
 
     serializeFunction =
          "intermediateFrom" <> n <> " :: " <> n <> " -> TDLSUPPORT.Intermediate\n"
-      <> fold (Array.mapWithIndex serializeCase ts)
-    serializeCase i (k /\ t) =
+      <> fold (map serializeCase ts)
+    serializeCase (k /\ t) =
          "intermediateFrom" <> n <> " (" <> n <> "_" <> k <> " tdl__a) =\n"
-      <> indent ("TDLSUPPORT.fromVariant "
-                    <> show i <> " "
+      <> indent ("TDLSUPPORT.fromSum "
+                    <> show k <> " "
                     <> pursSerialize t <> " "
                     <> "tdl__a") <> "\n"
 
@@ -153,10 +153,10 @@ pursSumDeclaration n ts =
          "intermediateTo" <> n
       <> " :: TDLSUPPORT.Intermediate -> TDLSUPPORT.Either String " <> n <> "\n"
       <> "intermediateTo" <> n <> " = TDLSUPPORT.toSum TDLSUPPORT.>=> case _ of\n"
-      <> fold (Array.mapWithIndex deserializeCase ts)
-      <> "  {d: _} -> TDLSUPPORT.Left " <> show "Sum discriminator was out of bounds." <> "\n"
-    deserializeCase i (k /\ t) =
-         "  {d: " <> show i <> ", x: tdl__x} ->\n"
+      <> fold (map deserializeCase ts)
+      <> "  {d: _} -> TDLSUPPORT.Left " <> show "Unknown sum discriminator." <> "\n"
+    deserializeCase (k /\ t) =
+         "  {d: " <> show k <> ", x: tdl__x} ->\n"
       <> indent (indent (pursDeserialize t)) <> " tdl__x "
       <> "TDLSUPPORT.<#> " <> n <> "_" <> k <> "\n"
 
