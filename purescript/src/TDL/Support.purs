@@ -2,10 +2,15 @@ module TDL.Support
   ( module Data.Argonaut.Core
   , module Data.ByteString
   , module Data.Either
+  , module Data.Maybe
+  , module Data.StrMap
   , module Prelude
   , eqArray
-  , unsafeIndex
   , hash
+  , fromProduct
+  , fromSum
+  , toProduct
+  , toSum
   ) where
 
 import Crypt.Hash.SHA256 (sha256)
@@ -15,20 +20,22 @@ import Data.ByteString (ByteString)
 import Data.ByteString as BS
 import Data.Either (Either(..), either)
 import Data.Foldable (and, foldMap)
+import Data.Foldable (and, foldr)
 import Data.Int (round)
+import Data.Int as Int
 import Data.Int.Bits ((.&.), shr)
 import Data.Map as Map
+import Data.Maybe (maybe)
+import Data.StrMap (StrMap, lookup)
 import Data.StrMap as StrMap
+import Data.Traversable (traverse)
 import Data.Tuple.Nested ((/\))
-import Partial.Unsafe (unsafePartial)
 import Prelude
-import TDL.Intermediate (Intermediate(..))
+import TDL.Intermediate (Intermediate(..), toText)
+import TDL.Serializers.JSON (serialize)
 
 eqArray :: forall a. (a -> a -> Boolean) -> Array a -> Array a -> Boolean
 eqArray f a b = Array.length a == Array.length b && and (Array.zipWith f a b)
-
-unsafeIndex :: forall a. Array a -> Int -> a
-unsafeIndex = unsafePartial Array.unsafeIndex
 
 hash :: forall a. (a -> Intermediate) -> a -> ByteString
 hash = \s x -> go (s x) # sha256
@@ -62,3 +69,21 @@ hash = \s x -> go (s x) # sha256
                       , (i `shr`  8) .&. 0xFF
                       , (i `shr`  0) .&. 0xFF
                       ]
+
+fromProduct :: Array {k :: String, v :: Intermediate} -> Intermediate
+fromProduct = Object <<< foldr (\{k, v} -> StrMap.insert k v) StrMap.empty
+
+fromSum :: forall a. String -> (a -> Intermediate) -> a -> Intermediate
+fromSum k f x = Array [String k, f x]
+
+toProduct :: Intermediate -> Either String (StrMap Intermediate)
+toProduct (Object o) = Right o
+toProduct _ = Left "Product was not serialized as an object."
+
+toSum :: Intermediate -> Either String {d :: String, x :: Intermediate}
+toSum (Array xs) = do
+  case xs of
+    [jd, x] -> {d: _, x} <$> toText jd
+    _ -> Left "Sum was serialized as an array of the wrong length."
+toSum _ =
+  Left "Sum was not serialized as an array."

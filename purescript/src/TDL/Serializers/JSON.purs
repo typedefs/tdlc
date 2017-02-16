@@ -8,12 +8,10 @@ module TDL.Serializers.JSON
 import Control.Alt ( (<|>) )
 import Data.Argonaut.Core (Json)
 import Data.Argonaut.Core as Json
-import Data.Array as Array
 import Data.ByteString (toString) as BS
 import Data.Int as Int
 import Data.Maybe (fromMaybe)
 import Node.Encoding (Encoding (..)) as BS
-import Partial.Unsafe (unsafePartial)
 import Prelude
 import TDL.Intermediate (Intermediate (..))
 import TDL.Intermediate as Intermediate
@@ -35,6 +33,3 @@ deserialize json = fromMaybe Intermediate.Null $
   (F64 <$> Json.toNumber json) <|>
   (Bool <$> Json.toBoolean json) <|>
   (String <$> Json.toString json)
-
-unsafeIndex :: forall a. Array a -> Int -> a
-unsafeIndex = unsafePartial Array.unsafeIndex
