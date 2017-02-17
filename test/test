@@ -45,11 +45,10 @@ def test_cases():
             with chdir('purescript'):
                 subprocess.check_call([
                     'pulp', 'build',
-                    '-o', os.path.join(tmp_path, 'output'),
                     '-I', tmp_path,
                 ])
 
-            with chdir(tmp_path):
+            with chdir('purescript'):
                 script = '''
                     var Main = require('./output/Main');
                     var status = 0;

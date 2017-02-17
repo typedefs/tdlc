@@ -40,12 +40,6 @@ fromBytes = Bytes
 fromArray :: forall a. (a -> Intermediate) -> Array a -> Intermediate
 fromArray f = Array <<< map f
 
-fromProduct :: Array Intermediate -> Intermediate
-fromProduct = Array
-
-fromVariant :: forall a. Int -> (a -> Intermediate) -> a -> Intermediate
-fromVariant n f x = Array [I32 n, f x]
-
 toI32 :: Intermediate -> Either String Int
 toI32 (I32 i) =
   pure i
@@ -80,19 +74,3 @@ toBytes _ = Left "bytes was not serialized as a string or byte array"
 toArray :: forall a. (Intermediate -> Either String a) -> Intermediate -> Either String (Array a)
 toArray f (Array xs) = traverse f xs
 toArray _ _ = Left "array was not serialized as an array."
-
-toProduct :: Int -> Intermediate -> Either String (Array Intermediate)
-toProduct n (Array xs) =
-  if Array.length xs == n
-    then Right xs
-    else Left "Product was serialized as an array of the wrong length."
-toProduct _ _ =
-  Left "Product was not serialized as an array."
-
-toSum :: Intermediate -> Either String {d :: Int, x :: Intermediate}
-toSum (Array xs) = do
-  case xs of
-    [jd, x] -> {d: _, x} <$> toI32 jd
-    _ -> Left "Sum was serialized as an array of the wrong length."
-toSum _ =
-  Left "Sum was not serialized as an array."

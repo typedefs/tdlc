@@ -71,7 +71,10 @@ pursSerialize (PrimType ArrayType) = "TDLSUPPORT.fromArray"
 pursSerialize (PrimType BytesType) = "TDLSUPPORT.fromBytes"
 pursSerialize (ProductType ts) =
   "(\\tdl__r -> TDLSUPPORT.fromProduct [" <> String.joinWith ", " entries <> "])"
-  where entries = map (\(k /\ t) -> pursSerialize t <> " tdl__r." <> k) ts
+  where entries = map entry ts
+        entry (k /\ t) = "{ k: " <> show k <>
+                         ", v: " <> pursSerialize t <> " tdl__r." <> k <> " " <>
+                         "}"
 pursSerialize (SumType []) = "TDLSUPPORT.absurd"
 pursSerialize (SumType _) = unsafeCrashWith "pursSerialize: SumType _"
 
@@ -86,7 +89,7 @@ pursDeserialize (PrimType ArrayType) = "TDLSUPPORT.toArray"
 pursDeserialize (PrimType BytesType) = "TDLSUPPORT.toBytes"
 pursDeserialize (ProductType ts) =
   "(\\tdl__r -> "
-  <> "TDLSUPPORT.toProduct " <> show (Array.length ts) <> " tdl__r"
+  <> "TDLSUPPORT.toProduct tdl__r"
   <> " TDLSUPPORT.>>= \\tdl__r' ->\n"
   <> record <> ")"
   where
@@ -95,12 +98,16 @@ pursDeserialize (ProductType ts) =
       | otherwise = indent (
             "{" <> String.joinWith ", " (map (\(k /\ _) -> k <> ": _") ts) <> "}\n"
             <> "TDLSUPPORT.<$> "
-            <> String.joinWith "\nTDLSUPPORT.<*> " (Array.mapWithIndex entry ts)
+            <> String.joinWith "\nTDLSUPPORT.<*> " (map entry ts)
           )
-    entry i (_ /\ t) =
-      pursDeserialize t <> " (TDLSUPPORT.unsafeIndex tdl__r' " <> show i <> ")"
+    entry (k /\ t) =
+      "(" <> pursDeserialize t <> " TDLSUPPORT.=<<" <>
+      " TDLSUPPORT.maybe (TDLSUPPORT.Left \"Key not present.\")" <>
+      " TDLSUPPORT.Right" <>
+      " (TDLSUPPORT.lookup " <> show k <> " tdl__r')" <>
+      ")"
 pursDeserialize (SumType []) =
-  "(\\_ -> TDLSUPPORT.Left " <> show "Sum discriminator was out of bounds." <> ")"
+  "(\\_ -> TDLSUPPORT.Left " <> show "Unknown sum discriminator." <> ")"
 pursDeserialize (SumType _) = unsafeCrashWith "pursDeserialize: SumType _"
 
 pursHash :: Type -> String
@@ -141,11 +148,11 @@ pursSumDeclaration n ts =
 
     serializeFunction =
          "intermediateFrom" <> n <> " :: " <> n <> " -> TDLSUPPORT.Intermediate\n"
-      <> fold (Array.mapWithIndex serializeCase ts)
-    serializeCase i (k /\ t) =
+      <> fold (map serializeCase ts)
+    serializeCase (k /\ t) =
          "intermediateFrom" <> n <> " (" <> n <> "_" <> k <> " tdl__a) =\n"
-      <> indent ("TDLSUPPORT.fromVariant "
-                    <> show i <> " "
+      <> indent ("TDLSUPPORT.fromSum "
+                    <> show k <> " "
                     <> pursSerialize t <> " "
                     <> "tdl__a") <> "\n"
 
@@ -153,10 +160,10 @@ pursSumDeclaration n ts =
          "intermediateTo" <> n
       <> " :: TDLSUPPORT.Intermediate -> TDLSUPPORT.Either String " <> n <> "\n"
       <> "intermediateTo" <> n <> " = TDLSUPPORT.toSum TDLSUPPORT.>=> case _ of\n"
-      <> fold (Array.mapWithIndex deserializeCase ts)
-      <> "  {d: _} -> TDLSUPPORT.Left " <> show "Sum discriminator was out of bounds." <> "\n"
-    deserializeCase i (k /\ t) =
-         "  {d: " <> show i <> ", x: tdl__x} ->\n"
+      <> fold (map deserializeCase ts)
+      <> "  {d: _} -> TDLSUPPORT.Left " <> show "Unknown sum discriminator." <> "\n"
+    deserializeCase (k /\ t) =
+         "  {d: " <> show k <> ", x: tdl__x} ->\n"
       <> indent (indent (pursDeserialize t)) <> " tdl__x "
       <> "TDLSUPPORT.<#> " <> n <> "_" <> k <> "\n"
 
