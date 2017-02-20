@@ -53,6 +53,9 @@ def test_cases():
                     var Main = require('./output/Main');
                     var status = 0;
                     for (var prop in Main) {
+                        if (prop.charAt(0) === '_') {
+                            continue;
+                        }
                         console.log(prop);
                         var ok = Main[prop]();
                         status = ok ? status : 1;
