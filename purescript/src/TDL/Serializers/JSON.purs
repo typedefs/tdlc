@@ -21,6 +21,7 @@ serialize :: Intermediate -> Json
 serialize Intermediate.Null = Json.jsonNull
 serialize (I32 i) = Json.fromNumber <<< Int.toNumber $ i
 serialize (F64 f)
+  -- https://github.com/purescript-contrib/purescript-argonaut/issues/34
   | isNaN f = Json.fromString "NaN"
   | f == infinity = Json.fromString "+∞"
   | f == (negate infinity) = Json.fromString "-∞"
