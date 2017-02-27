@@ -23,8 +23,8 @@ serialize (I32 i) = Json.fromNumber <<< Int.toNumber $ i
 serialize (F64 f)
   -- https://github.com/purescript-contrib/purescript-argonaut/issues/34
   | isNaN f = Json.fromString "NaN"
-  | f == infinity = Json.fromString "+∞"
-  | f == (negate infinity) = Json.fromString "-∞"
+  | f == infinity = Json.fromString "Inf"
+  | f == (negate infinity) = Json.fromString "-Inf"
   | otherwise = Json.fromNumber f
 serialize (Bool b) = Json.fromBoolean b
 serialize (String t) = Json.fromString t

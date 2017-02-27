@@ -54,9 +54,9 @@ toF64 :: Intermediate -> Either String Number
 toF64 (F64 f) = Right f
 toF64 (I32 i) = Right (Int.toNumber i)
 toF64 (String "NaN") = Right nan
-toF64 (String "+∞") = Right infinity
-toF64 (String "-∞") = Right (negate infinity)
-toF64 _ = Left "f64 was not serialized as a number or NaN/∞ indicator."
+toF64 (String "Inf") = Right infinity
+toF64 (String "-Inf") = Right (negate infinity)
+toF64 _ = Left "f64 was not serialized as a number or NaN/infinity indicator."
 
 toBool :: Intermediate -> Either String Boolean
 toBool (Bool b) = Right b
