@@ -1,0 +1,3 @@
+module TDLOutput;
+
+type Load = f64;

@@ -1,16 +1,17 @@
 module TDL.Intermediate
 where
 
-import Prelude
+import Data.Array as Array
 import Data.ByteString (ByteString)
 import Data.ByteString as BS
-import Node.Encoding (Encoding (..)) as BS
 import Data.Either (Either(..), either)
-import Data.Array as Array
 import Data.Int as Int
 import Data.Maybe (maybe)
 import Data.StrMap (StrMap)
 import Data.Traversable (traverse)
+import Global (nan, infinity)
+import Node.Encoding (Encoding (..)) as BS
+import Prelude
 
 data Intermediate
   = Null
@@ -52,7 +53,10 @@ toI32 _ =
 toF64 :: Intermediate -> Either String Number
 toF64 (F64 f) = Right f
 toF64 (I32 i) = Right (Int.toNumber i)
-toF64 _ = Left "f64 was not serialized as a number."
+toF64 (String "NaN") = Right nan
+toF64 (String "Inf") = Right infinity
+toF64 (String "-Inf") = Right (negate infinity)
+toF64 _ = Left "f64 was not serialized as a number or NaN/infinity indicator."
 
 toBool :: Intermediate -> Either String Boolean
 toBool (Bool b) = Right b

@@ -11,6 +11,7 @@ import Data.Argonaut.Core as Json
 import Data.ByteString (toString) as BS
 import Data.Int as Int
 import Data.Maybe (fromMaybe)
+import Global (infinity, isNaN)
 import Node.Encoding (Encoding (..)) as BS
 import Prelude
 import TDL.Intermediate (Intermediate (..))
@@ -19,7 +20,12 @@ import TDL.Intermediate as Intermediate
 serialize :: Intermediate -> Json
 serialize Intermediate.Null = Json.jsonNull
 serialize (I32 i) = Json.fromNumber <<< Int.toNumber $ i
-serialize (F64 f) = Json.fromNumber f
+serialize (F64 f)
+  -- https://github.com/purescript-contrib/purescript-argonaut/issues/34
+  | isNaN f = Json.fromString "NaN"
+  | f == infinity = Json.fromString "Inf"
+  | f == (negate infinity) = Json.fromString "-Inf"
+  | otherwise = Json.fromNumber f
 serialize (Bool b) = Json.fromBoolean b
 serialize (String t) = Json.fromString t
 serialize (Bytes b) = Json.fromString $ BS.toString b BS.Base64
