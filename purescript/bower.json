@@ -13,6 +13,7 @@
     "purescript-maps": "^2.1.1",
     "purescript-control": "^2.0.0",
     "purescript-tuples": "^3.1.0",
-    "purescript-globals": "^2.0.0"
+    "purescript-globals": "^2.0.0",
+    "purescript-aff": "^2.0.3"
   }
 }

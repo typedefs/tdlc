@@ -72,7 +72,10 @@ module_ = do
   pure $ Module name doc' declarations
 
 declaration :: Parser Declaration
-declaration = do
+declaration = P.try typeDeclaration <|> serviceDeclaration
+
+typeDeclaration :: Parser Declaration
+typeDeclaration = do
   doc' <- doc
 
   {name: sigName, typeKind} <-
@@ -94,6 +97,20 @@ declaration = do
 
   pure $ TypeDeclaration name doc' typeKind original
 
+serviceDeclaration :: Parser Declaration
+serviceDeclaration = do
+  doc' <- doc
+
+  serviceKeyword
+  name <- identifier
+  colonPunc
+  from <- type_
+  rightArrowPunc
+  to <- type_
+  semicolonPunc
+
+  pure $ ServiceDeclaration name doc' from to
+
 --------------------------------------------------------------------------------
 
 lexeme :: forall a. Parser a -> Parser a
@@ -104,7 +121,7 @@ lexeme p = blank *> p <* blank
 identifier :: Parser String
 identifier = lexeme do
   name <- String.fromCharArray <<< Array.fromFoldable <$> PC.many1 (PS.alphaNum <|> PS.char '_')
-  guard (name `Array.notElem` ["array", "bool", "bytes", "f64", "i32", "module", "product", "sum", "text", "type"])
+  guard (name `Array.notElem` ["array", "bool", "bytes", "f64", "i32", "module", "product", "service", "sum", "text", "type"])
   pure name
 
 doc :: Parser Doc
@@ -133,6 +150,9 @@ moduleKeyword = void $ lexeme $ PS.string "module"
 
 productKeyword :: Parser Unit
 productKeyword = void $ lexeme $ PS.string "product"
+
+serviceKeyword :: Parser Unit
+serviceKeyword = void $ lexeme $ PS.string "service"
 
 sumKeyword :: Parser Unit
 sumKeyword = void $ lexeme $ PS.string "sum"

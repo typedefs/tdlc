@@ -51,6 +51,7 @@ data Module = Module String Doc (List Declaration)
 
 data Declaration
   = TypeDeclaration String Doc Kind Type
+  | ServiceDeclaration String Doc Type Type
 
 --------------------------------------------------------------------------------
 

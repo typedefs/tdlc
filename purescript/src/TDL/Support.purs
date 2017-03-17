@@ -1,5 +1,6 @@
 module TDL.Support
-  ( module Data.Argonaut.Core
+  ( module Control.Monad.Aff
+  , module Data.Argonaut.Core
   , module Data.ByteString
   , module Data.Either
   , module Data.Maybe
@@ -11,8 +12,11 @@ module TDL.Support
   , fromSum
   , toProduct
   , toSum
+  , Service(..)
+  , service
   ) where
 
+import Control.Monad.Aff (Aff)
 import Crypt.Hash.SHA256 (sha256)
 import Data.Argonaut.Core (Json)
 import Data.Array as Array
@@ -87,3 +91,14 @@ toSum (Array xs) = do
     _ -> Left "Sum was serialized as an array of the wrong length."
 toSum _ =
   Left "Sum was not serialized as an array."
+
+data Service eff = Service String (Intermediate -> Aff eff (Either String Intermediate))
+
+service
+  :: forall eff i o
+   . (Intermediate -> Either String i)
+  -> (o -> Intermediate)
+  -> String
+  -> (i -> Aff eff o)
+  -> Service eff
+service des ser n s = Service n (traverse (map ser <<< s) <<< des)
