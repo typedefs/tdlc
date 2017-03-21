@@ -17,6 +17,7 @@
     "purescript-aff": "^2.0.3",
     "purescript-affjax": "^3.0.2",
     "purescript-exceptions": "^2.0.0",
-    "purescript-transformers": "^2.2.0"
+    "purescript-transformers": "^2.2.0",
+    "purescript-node-http": "^3.0.1"
   }
 }
