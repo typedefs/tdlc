@@ -21,8 +21,20 @@ def test_compiler():
         subprocess.check_call(['pulp', 'test'])
 
 def build_purescript_support():
-    with chdir('purescript'):
-        subprocess.check_call(['pulp', 'build'])
+    subprocess.check_call(['bash', '-c', '''
+        set -e
+        if [ ! -e purescript ]; then
+            git clone --depth 1 git@github.com:TinkerTravel/purescript-tdl.git purescript
+        fi
+        (
+            cd purescript
+            git pull
+            rm -rf bower_components node_modules output
+            bower i
+            npm i
+            pulp build
+        )
+    '''])
 
 def test_cases():
     for case in {os.path.splitext(p)[0] for p in os.listdir('test/cases')}:
