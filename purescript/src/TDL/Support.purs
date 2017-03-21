@@ -5,6 +5,7 @@ module TDL.Support
   , module Data.Either
   , module Data.Maybe
   , module Data.StrMap
+  , module Network.HTTP.Affjax
   , module Prelude
   , eqArray
   , hash
@@ -14,9 +15,12 @@ module TDL.Support
   , toSum
   , Service(..)
   , service
+  , call
   ) where
 
 import Control.Monad.Aff (Aff)
+import Control.Monad.Eff.Exception (error)
+import Control.Monad.Error.Class (throwError)
 import Crypt.Hash.SHA256 (sha256)
 import Data.Argonaut.Core (Json)
 import Data.Array as Array
@@ -34,9 +38,10 @@ import Data.StrMap (StrMap, lookup)
 import Data.StrMap as StrMap
 import Data.Traversable (traverse)
 import Data.Tuple.Nested ((/\))
+import Network.HTTP.Affjax (AJAX, post)
 import Prelude
 import TDL.Intermediate (Intermediate(..), toText)
-import TDL.Serializers.JSON (serialize)
+import TDL.Serializers.JSON (deserialize, serialize)
 
 eqArray :: forall a. (a -> a -> Boolean) -> Array a -> Array a -> Boolean
 eqArray f a b = Array.length a == Array.length b && and (Array.zipWith f a b)
@@ -102,3 +107,17 @@ service
   -> (i -> Aff eff o)
   -> Service eff
 service des ser n s = Service n (traverse (map ser <<< s) <<< des)
+
+call
+  :: forall i o eff
+   . (i -> Intermediate)
+  -> (Intermediate -> Either String o)
+  -> String
+  -> String
+  -> i
+  -> Aff (ajax :: AJAX | eff) o
+call ser des n url i = do
+  res <- post (url <> "/" <> n) (serialize (ser i))
+  case des (deserialize res.response) of
+    Left err -> throwError (error err)
+    Right ok -> pure ok

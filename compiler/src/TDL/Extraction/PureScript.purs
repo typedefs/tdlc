@@ -136,6 +136,16 @@ pursDeclaration (ServiceDeclaration n _ f t) =
                            <> pursSerialize t <> " "
                            <> show n <> "\n"
 
+  <> "call" <> n
+  <> " :: forall tdl__e"
+  <> "  . String"
+  <> " -> " <> pursTypeName f
+  <> " -> TDLSUPPORT.Aff (ajax :: TDLSUPPORT.AJAX | tdl__e) " <> pursTypeName t <> "\n"
+  <> "call" <> n <> " = "
+  <> "TDLSUPPORT.call " <> pursSerialize f <> " "
+                        <> pursDeserialize t <> " "
+                        <> show n <> "\n"
+
 pursSumDeclaration :: String -> Array (Tuple String Type) -> String
 pursSumDeclaration n ts =
   adt
