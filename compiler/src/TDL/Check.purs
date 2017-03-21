@@ -105,9 +105,13 @@ inferModule (Module _ _ ds) = do
 
 inferDeclaration :: Declaration -> Check Environment
 inferDeclaration (TypeDeclaration n _ k _) = pure $ Map.singleton n k
+inferDeclaration (ServiceDeclaration _ _ _ _) = pure Map.empty
 
 checkDeclaration :: Declaration -> Check Unit
 checkDeclaration (TypeDeclaration _ _ k t) = do
   checkSumTopLevelness t
   k' <- inferKind t
   assertKind k k'
+checkDeclaration (ServiceDeclaration _ _ f t) = do
+  assertKind SeriKind =<< inferKind f
+  assertKind SeriKind =<< inferKind t

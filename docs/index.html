@@ -160,6 +160,21 @@
           </p>
         </section>
       </section>
+      <section>
+        <h1>Services</h1>
+        <p>
+          A service is a method that can be called over a network. TDL
+          generates functions to call services and functions to define
+          services. An example of a service declaration follows:
+        </p>
+        <pre><code>service GetUser : UserID -> maybe User;</code></pre>
+        <p>
+          A service has a request type and a response type. The request type
+          appears on the left-hand side of the arrow, whereas the response type
+          appears on the right-hand side of the arrow. Both types must be of
+          kind <code>*</code>.
+        </p>
+      </section>
     </article>
   </body>
 </html>

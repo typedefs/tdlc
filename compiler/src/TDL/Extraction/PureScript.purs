@@ -126,6 +126,25 @@ pursDeclaration (TypeDeclaration n _ k t) =
     SumType [] -> pursTypeDeclaration n k t
     SumType ts -> pursSumDeclaration n ts
     _ -> pursTypeDeclaration n k t
+pursDeclaration (ServiceDeclaration n _ f t) =
+  "define" <> n
+  <> " :: forall tdl__e"
+  <> "  . (" <> pursTypeName f <> " -> TDLSUPPORT.Aff tdl__e " <> pursTypeName t <> ")"
+  <> " -> TDLSUPPORT.Service tdl__e\n"
+  <> "define" <> n <> " = "
+  <> "TDLSUPPORT.service " <> pursDeserialize f <> " "
+                           <> pursSerialize t <> " "
+                           <> show n <> "\n"
+
+  <> "call" <> n
+  <> " :: forall tdl__e"
+  <> "  . String"
+  <> " -> " <> pursTypeName f
+  <> " -> TDLSUPPORT.Aff (ajax :: TDLSUPPORT.AJAX | tdl__e) " <> pursTypeName t <> "\n"
+  <> "call" <> n <> " = "
+  <> "TDLSUPPORT.call " <> pursSerialize f <> " "
+                        <> pursDeserialize t <> " "
+                        <> show n <> "\n"
 
 pursSumDeclaration :: String -> Array (Tuple String Type) -> String
 pursSumDeclaration n ts =

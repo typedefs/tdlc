@@ -1,0 +1,6 @@
+module TDLOutput;
+
+## Documented service
+service Even : i32 -> bool;
+
+service Odd : i32 -> bool;

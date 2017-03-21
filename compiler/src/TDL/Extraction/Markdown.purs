@@ -20,6 +20,12 @@ markdownDeclaration (TypeDeclaration n (Doc d) k t) = Doc $
   <> indent ("type " <> n <> " : " <> prettyKind k <> ";") <> "\n"
   <> indent ("type " <> n <> " = " <> prettyType t <> ";") <> "\n"
   <> "\n" <> d
+markdownDeclaration (ServiceDeclaration n (Doc d) f t) = Doc $
+     "## " <> n <> "\n"
+  <> "\n"
+  <> indent ("service " <> n <> " : " <> prettyType f <>
+                                " -> " <> prettyType t <> ";") <> "\n"
+  <> "\n" <> d
 
 indent :: String -> String
 indent = String.split (String.Pattern "\n")
